@@ -1,0 +1,416 @@
+/* Стили библиотеки паттернов ПМРК. Цвета/отступы — через токены Consta + --pmrk-*. */
+
+/* --- Карточка-секция --- */
+.pmrk-card {
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--pmrk-radius-lg);
+  box-shadow: var(--pmrk-shadow-1);
+}
+.pmrk-card--pad {
+  padding: 16px 18px;
+}
+.pmrk-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.pmrk-card__title {
+  font-weight: 600;
+}
+
+/* --- Заголовок страницы --- */
+.pmrk-page {
+  padding: 20px 24px 48px;
+  max-width: var(--pmrk-content-max);
+  margin: 0 auto;
+  width: 100%;
+}
+.pmrk-pagehead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+/* Размер задаётся классом (не инлайном), чтобы скин СФК мог увеличить до 25px. */
+.pmrk-pagehead__title {
+  font-size: 22px;
+}
+.pmrk-breadcrumbs {
+  font-size: 12px;
+  color: var(--color-typo-secondary);
+  margin-bottom: 6px;
+}
+.pmrk-breadcrumbs a {
+  color: var(--color-typo-secondary);
+  text-decoration: none;
+}
+.pmrk-breadcrumbs a:hover {
+  color: var(--color-typo-brand);
+}
+
+/* --- Статистика / KPI --- */
+.pmrk-statgrid {
+  display: grid;
+  gap: 12px;
+}
+.pmrk-stat {
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--pmrk-radius);
+  padding: 12px 14px;
+}
+.pmrk-stat__label {
+  font-size: 12px;
+  color: var(--color-typo-secondary);
+  margin-bottom: 4px;
+}
+.pmrk-stat__value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.pmrk-stat__sub {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Сноска актуальности расчётной величины (↻ дата) — контроль свежести выведенных
+   значений. Визуально отличается от «Актуально на» раздела (зелёная точка). */
+.pmrk-calcstamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  line-height: 1.3;
+  color: var(--color-typo-ghost);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: help;
+}
+.pmrk-calcstamp__glyph {
+  color: var(--pmrk-ai);
+  font-size: 11px;
+}
+.pmrk-stat__stamp {
+  margin-top: 3px;
+}
+
+/* --- Цветовые индикаторы риска (ФТ-12.8) --- */
+.pmrk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.pmrk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* --- AI-Summary (фирменный компонент) --- */
+.pmrk-ai {
+  padding: 14px 16px 14px 20px;
+  margin-bottom: 16px;
+}
+.pmrk-ai__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.pmrk-ai__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--pmrk-ai);
+  color: #fff;
+  border-radius: 6px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.pmrk-ai__verdict {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-typo-primary);
+  margin-bottom: 10px;
+}
+.pmrk-ai__factor {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--pmrk-ai-border);
+  font-size: 13px;
+}
+.pmrk-ai__src {
+  color: var(--pmrk-ai-strong);
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.pmrk-ai__src:hover {
+  text-decoration: underline;
+}
+.pmrk-ai__foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--color-typo-secondary);
+}
+.pmrk-arrow-up { color: var(--pmrk-risk-4); }
+.pmrk-arrow-down { color: var(--pmrk-risk-1); }
+.pmrk-arrow-flat { color: var(--color-typo-ghost); }
+
+/* --- Таблица FAANG-класса --- */
+.pmrk-table {
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--pmrk-radius-lg);
+  overflow: hidden;
+}
+.pmrk-table__head {
+  display: flex;
+  align-items: center;
+  /* была --color-bg-secondary == фон-канва → шапка сливалась. Делаем таблицу
+     единой белой поверхностью: шапка белая, отделена от строк чёткой линией. */
+  background: var(--color-bg-default);
+  border-bottom: 2px solid var(--color-bg-border);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--color-typo-secondary);
+  position: sticky;
+  top: 0;
+  /* без положительного z-index: position:sticky уже рисуется поверх обычных строк,
+     а положительный z-index выносил шапку в верхний слой body и пробивал модалки. */
+}
+.pmrk-th {
+  padding: 9px 12px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pmrk-th:hover {
+  color: var(--color-typo-primary);
+}
+.pmrk-tr {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--color-bg-border);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.08s;
+}
+.pmrk-tr:hover {
+  background: var(--color-bg-secondary);
+}
+.pmrk-td {
+  padding: 9px 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pmrk-table__scroll {
+  overflow: auto;
+  position: relative;
+}
+
+/* --- Чипы-фильтры --- */
+.pmrk-filterbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.pmrk-filterchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--color-bg-border);
+  background: var(--color-bg-default);
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 12.5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pmrk-filterchip:hover {
+  border-color: var(--color-typo-brand);
+}
+.pmrk-filterchip--active {
+  background: var(--color-bg-brand);
+  border-color: var(--color-bg-brand);
+  color: #fff;
+}
+.pmrk-savedview {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 12.5px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-typo-secondary);
+}
+.pmrk-savedview--active {
+  background: var(--color-bg-secondary);
+  color: var(--color-typo-primary);
+  font-weight: 600;
+}
+
+/* Сегмент-контрол для вкладок-фильтров (паттерн из СФК): серая капсула,
+   белая активная «таблетка» с тенью, счётчики-бейджи. Для срезов, НЕ для
+   навигации по разделам (там — подчёркивание). */
+.pmrk-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-border);
+  border-radius: 10px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.pmrk-seg__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--color-typo-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: background 0.1s, color 0.1s;
+}
+.pmrk-seg__item:hover {
+  color: var(--color-typo-primary);
+}
+.pmrk-seg__item--active {
+  background: var(--color-bg-default);
+  color: var(--color-typo-primary);
+  font-weight: 600;
+  box-shadow: var(--pmrk-shadow-1);
+}
+.pmrk-seg__count {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  min-width: 16px;
+  text-align: center;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-bg-brand) 13%, transparent);
+  color: var(--color-bg-brand);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Лента сигналов --- */
+/* Контейнер ленты: в ПМРК — карточки с зазором; в скине СФК зазор снимается,
+   строки становятся сплошным списком с разделителями (см. skin-sfk.css). */
+.pmrk-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pmrk-signal {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-bg-border);
+  border-left-width: 3px;
+  border-radius: var(--pmrk-radius);
+  background: var(--color-bg-default);
+  cursor: pointer;
+  transition: box-shadow 0.1s;
+}
+.pmrk-signal:hover {
+  box-shadow: var(--pmrk-shadow-2);
+}
+.pmrk-signal--critical { border-left-color: var(--pmrk-risk-4); }
+.pmrk-signal--high { border-left-color: var(--pmrk-risk-3); }
+.pmrk-signal--medium { border-left-color: var(--pmrk-risk-2); }
+.pmrk-signal--low { border-left-color: var(--color-bg-border); }
+.pmrk-signal__unread {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-bg-brand);
+  margin-top: 6px;
+  flex: none;
+}
+
+/* --- Пустые/загрузочные состояния --- */
+.pmrk-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 40px 24px;
+  color: var(--color-typo-secondary);
+}
+
+/* --- Аудит-футер --- */
+.pmrk-audit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin-top: 24px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-bg-border);
+  font-size: 12px;
+  color: var(--color-typo-secondary);
+}
+.pmrk-audit a {
+  color: var(--color-typo-brand);
+  text-decoration: none;
+}
+
+/* --- Шаги маршрута / прогресс flow --- */
+.pmrk-route {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  overflow-x: auto;
+}
+.pmrk-route__step {
+  flex: 1 1 0;
+  min-width: 150px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-bg-border);
+  border-right: none;
+  position: relative;
+}
+.pmrk-route__step:last-child { border-right: 1px solid var(--color-bg-border); border-radius: 0 var(--pmrk-radius) var(--pmrk-radius) 0; }
+.pmrk-route__step:first-child { border-radius: var(--pmrk-radius) 0 0 var(--pmrk-radius); }
+.pmrk-route__step--done { background: var(--pmrk-risk-1-bg); }
+.pmrk-route__step--current { background: var(--color-bg-brand); color: #fff; }
+.pmrk-route__step--upcoming { background: var(--color-bg-default); }
+.pmrk-route__step--current .pmrk-muted { color: rgba(255,255,255,0.85); }
+.pmrk-route__num {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}

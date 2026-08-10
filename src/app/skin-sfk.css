@@ -1,0 +1,412 @@
+/* =============================================================================
+   СКИН «СФК» — полное визуальное повторение портала СФК поверх разметки ПМРК.
+
+   Активируется атрибутом [data-skin="sfk"] на <html> (см. AppContext). Контент,
+   маршруты и компоненты ПМРК НЕ меняются — переопределяется только визуальный
+   язык: токены геометрии/теней, типографика (Inter), оболочка и поверхности.
+
+   Большинство правил опирается на те же Consta-токены (--color-*) и --pmrk-*,
+   поэтому ТЁМНАЯ ТЕМА наследуется автоматически. Литералы СФК (градиент канвы,
+   семантические цвета статусов) переопределяются под dark в конце файла.
+
+   Источник дизайна: sfk-portal/src/styles.css.
+   ========================================================================== */
+
+/* ───────────────────────── 1. Токены и типографика ───────────────────────── */
+[data-skin='sfk'] {
+  /* геометрия СФК: крупный радиус «Apple-like» */
+  --pmrk-radius: 10px;
+  --pmrk-radius-lg: 14px;
+  --pmrk-sidebar-w: 248px;
+
+  /* мягкие послойные тени вместо жёстких рамок */
+  --pmrk-shadow-1: 0 1px 2px rgba(20, 40, 70, 0.05), 0 1px 1px rgba(20, 40, 70, 0.03);
+  --pmrk-shadow-2: 0 4px 16px rgba(20, 40, 70, 0.07), 0 1px 3px rgba(20, 40, 70, 0.05);
+  --pmrk-shadow-pop: 0 18px 48px rgba(20, 30, 50, 0.16);
+
+  /* линия-hairline СФК. Литерал (как в самом СФК): на <html> Consta-токен
+     --color-bg-border ещё не определён (он на .Theme-потомке), и var() дал бы
+     пустое значение, ломая border-shorthand'ы. Тёмная тема — override ниже. */
+  --sfk-line: #e7ebf2;
+
+  /* единая семантика статусов СФК (точка + подпись в pill) */
+  --st-done: #1f8a52; --st-done-bg: rgba(42, 167, 102, 0.12);
+  --st-work: #0a6bb0; --st-work-bg: rgba(0, 121, 193, 0.11);
+  --st-soon: #b06f00; --st-soon-bg: rgba(217, 138, 0, 0.15);
+  --st-over: #c92a2a; --st-over-bg: rgba(226, 59, 59, 0.11);
+  --st-plan: #5b6472; --st-plan-bg: rgba(120, 130, 148, 0.12);
+}
+
+/* Шрифт и сглаживание СФК. Inter не бандлится (как и в самом СФК) — честный
+   фолбэк на Segoe/системный, чтобы прототип работал офлайн (Astra/Яндекс). */
+[data-skin='sfk'] body,
+[data-skin='sfk'] .Theme {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.003em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* табличные цифры для денег/баллов — как в СФК */
+[data-skin='sfk'] .pmrk-stat__value,
+[data-skin='sfk'] .pmrk-td,
+[data-skin='sfk'] .pmrk-tnum { font-variant-numeric: tabular-nums; }
+
+/* ─────────────────────── 2. Рабочая область: канва СФК ────────────────────── */
+[data-skin='sfk'] .pmrk-app { background: var(--color-bg-secondary); }
+[data-skin='sfk'] .pmrk-content {
+  background: linear-gradient(180deg, #f6f8fb 0%, #f3f5f8 220px);
+}
+
+/* ═══════════════════ КАРКАС СФК (.sfk-*) — топология 1:1 ══════════════════════
+   Отдельная оболочка AppShellSfk повторяет sfk-portal/src/App.tsx: сайдбар +
+   рабочая область, где заголовок и контролы в одной строке топбара. Цвета текста
+   и границ — через Consta-токены (тёмная тема наследуется), литералы только для
+   градиента канвы и фирменных акцентов. */
+[data-skin='sfk'] .sfk-app {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-bg-secondary);
+}
+
+/* — Сайдбар — */
+[data-skin='sfk'] .sfk-sidebar {
+  background: var(--color-bg-default);
+  border-right: 1px solid var(--sfk-line);
+  box-shadow: var(--pmrk-shadow-1);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px;
+  overflow: hidden;
+}
+[data-skin='sfk'] .sfk-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 8px 14px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--sfk-line);
+  cursor: pointer;
+}
+[data-skin='sfk'] .sfk-brand-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--color-bg-brand);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 13px;
+  flex: none;
+}
+[data-skin='sfk'] .sfk-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+[data-skin='sfk'] .sfk-brand-text strong { font-size: 15px; }
+[data-skin='sfk'] .sfk-brand-text span { font-size: 11px; color: var(--color-typo-secondary); }
+
+[data-skin='sfk'] .sfk-nav { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; }
+[data-skin='sfk'] .sfk-nav-group { margin-top: 12px; }
+[data-skin='sfk'] .sfk-nav-group:first-child { margin-top: 2px; }
+[data-skin='sfk'] .sfk-nav-group-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--color-typo-ghost);
+  padding: 6px 12px 6px;
+}
+[data-skin='sfk'] .sfk-nav a {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  color: var(--color-typo-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s;
+}
+[data-skin='sfk'] .sfk-nav a:hover { background: var(--color-bg-secondary); color: var(--color-typo-primary); }
+[data-skin='sfk'] .sfk-nav a.active { background: var(--color-bg-brand); color: #fff; font-weight: 600; }
+/* подпись прижата к иконке слева; бейдж уходит вправо своим margin-left:auto.
+   НЕ ставим flex на span — Consta-иконка тоже <span>, и flex растягивал её. */
+[data-skin='sfk'] .sfk-nav .count {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: var(--st-over-bg);
+  color: var(--st-over);
+  border-radius: 20px;
+  padding: 1px 7px;
+}
+[data-skin='sfk'] .sfk-nav a.active .count { background: rgba(255, 255, 255, 0.28); color: #fff; }
+[data-skin='sfk'] .sfk-nav-ai { margin-left: auto; color: var(--pmrk-ai); font-size: 11px; }
+[data-skin='sfk'] .sfk-nav a.active .sfk-nav-ai { color: rgba(255, 255, 255, 0.9); }
+
+[data-skin='sfk'] .sfk-side-user {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--color-bg-secondary);
+}
+[data-skin='sfk'] .sfk-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--color-bg-brand);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+[data-skin='sfk'] .sfk-side-user-info { display: flex; flex-direction: column; min-width: 0; }
+[data-skin='sfk'] .sfk-side-user-info strong { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+[data-skin='sfk'] .sfk-side-user-info span { font-size: 10.5px; color: var(--color-typo-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* — Рабочая область + топбар (заголовок и контролы в одной строке) — */
+[data-skin='sfk'] .sfk-workspace {
+  overflow-y: auto;
+  min-height: 0;
+  /* горизонтальный отступ 24px дают топбар и .pmrk-page (как в ПМРК),
+     чтобы full-bleed sticky-шапка профиля (margin 0 -24px) совпадала по краю. */
+  padding: 0;
+  background: linear-gradient(180deg, #f6f8fb 0%, #f3f5f8 220px);
+}
+[data-skin='sfk'] .sfk-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 0;
+  margin-bottom: 22px;
+}
+[data-skin='sfk'] .sfk-phead-t { flex: 1; min-width: 0; }
+/* действия страницы — отдельной строкой справа (как тулбары экранов СФК),
+   чтобы не теснить заголовок в строке топбара с глобальными контролами. */
+[data-skin='sfk'] .sfk-page-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin: -6px 0 18px; }
+[data-skin='sfk'] .sfk-breadcrumb { font-size: 11.5px; color: var(--color-typo-secondary); font-weight: 500; margin-bottom: 6px; }
+[data-skin='sfk'] .sfk-breadcrumb a { color: var(--color-typo-secondary); text-decoration: none; }
+[data-skin='sfk'] .sfk-breadcrumb a:hover { color: var(--color-typo-brand); }
+[data-skin='sfk'] .sfk-page-title { font-size: 25px; font-weight: 700; letter-spacing: -0.02em; margin: 0; line-height: 1.15; }
+[data-skin='sfk'] .sfk-page-sub { color: var(--color-typo-secondary); font-size: 13.5px; margin-top: 5px; max-width: 760px; line-height: 1.5; }
+
+[data-skin='sfk'] .sfk-hero-actions { display: flex; align-items: center; gap: 10px; flex: none; flex-wrap: wrap; justify-content: flex-end; }
+[data-skin='sfk'] .sfk-persona {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-bg-default);
+  border: 1px solid var(--sfk-line);
+  border-radius: 10px;
+  padding: 5px 8px 5px 12px;
+  box-shadow: var(--pmrk-shadow-1);
+  height: 38px;
+}
+[data-skin='sfk'] .sfk-persona label { font-size: 11px; color: var(--color-typo-secondary); }
+[data-skin='sfk'] .sfk-persona select { border: none; background: transparent; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--color-typo-primary); cursor: pointer; max-width: 150px; }
+[data-skin='sfk'] .sfk-icon-button {
+  position: relative;
+  border: 1px solid var(--sfk-line);
+  background: var(--color-bg-default);
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: var(--color-typo-secondary);
+  box-shadow: var(--pmrk-shadow-1);
+}
+[data-skin='sfk'] .sfk-icon-button:hover { color: var(--color-typo-brand); border-color: var(--color-typo-brand); }
+[data-skin='sfk'] .sfk-bell .dot {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--st-over);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 1px 6px;
+}
+
+/* Страницы внутри SFK-каркаса: горизонтальный отступ 24px (как в ПМРК),
+   центрирование снимаем (СФК полноширинный), верх отдан топбару. */
+[data-skin='sfk'] .sfk-workspace .pmrk-page { max-width: none; padding: 0 24px 40px; margin: 0; }
+
+[data-skin='sfk'] .Theme_color_gpnDark .sfk-workspace {
+  background: linear-gradient(180deg, #171c24 0%, #12161c 220px);
+}
+[data-skin='sfk'] .Theme_color_gpnDark .sfk-sidebar { box-shadow: none; }
+
+/* ───────────────────────────── 3. Сайдбар (старый CSS-скин) ───────────────────
+   Ниже — правила для оболочки ПМРК под скином sfk. С появлением AppShellSfk они
+   не задействуются (в скине sfk рендерится .sfk-*), но оставлены безвредно. */
+[data-skin='sfk'] .pmrk-sidebar { box-shadow: var(--pmrk-shadow-1); }
+/* бренд-чип: сплошной фирменный синий, радиус 9 (в СФК — не градиент) */
+[data-skin='sfk'] .pmrk-brand__mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--color-bg-brand);
+  font-weight: 700;
+}
+[data-skin='sfk'] .pmrk-nav { padding: 12px 12px; }
+[data-skin='sfk'] .pmrk-nav__group {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #9aa3b2;
+  padding: 12px 12px 6px;
+}
+[data-skin='sfk'] .pmrk-nav__item {
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  transition: background 0.13s, color 0.13s;
+}
+/* в СФК неактивные пункты — приглушённые (вторичный текст), активный — синяя заливка */
+[data-skin='sfk'] .pmrk-nav__item:not(.pmrk-nav__item--active) { color: var(--color-typo-secondary); }
+[data-skin='sfk'] .pmrk-nav__badge { border-radius: 20px; font-weight: 700; }
+
+/* ──────────────────────── 4. Топбар (полоса управления) ───────────────────── */
+/* СФК не имеет фиксированной полосы — но Cmd-K и тумблер AI это сигнатуры ПМРК,
+   которые сохраняем. Оформляем полосу в вокабуляре СФК: белая, hairline. */
+[data-skin='sfk'] .pmrk-search-trigger {
+  background: var(--color-bg-default);
+  border-radius: 10px;
+  box-shadow: var(--pmrk-shadow-1);
+}
+[data-skin='sfk'] .pmrk-iconbtn { border-radius: 10px; }
+[data-skin='sfk'] .pmrk-iconbtn:hover { color: var(--color-typo-brand); }
+
+/* ─────────────────────────── 5. Заголовок страницы ────────────────────────── */
+[data-skin='sfk'] .pmrk-pagehead__title {
+  font-size: 25px;
+  letter-spacing: -0.02em;
+}
+[data-skin='sfk'] .pmrk-breadcrumbs { font-size: 11.5px; font-weight: 500; }
+
+/* ──────────────────────── 6. Карточки → панели СФК ─────────────────────────── */
+/* hairline-граница + мягкая тень + радиус 14 (токены выше дают это автоматически) */
+[data-skin='sfk'] .pmrk-card {
+  border-color: var(--sfk-line);
+  box-shadow: var(--pmrk-shadow-1);
+}
+[data-skin='sfk'] .pmrk-card--pad { padding: 18px; }
+[data-skin='sfk'] .pmrk-card__head { margin-bottom: 14px; }
+[data-skin='sfk'] .pmrk-card__title { font-size: 14.5px; }
+
+/* ──────────────────────────── 7. Метрики / KPI ────────────────────────────── */
+[data-skin='sfk'] .pmrk-stat {
+  border-color: var(--sfk-line);
+  border-radius: var(--pmrk-radius-lg);
+  box-shadow: var(--pmrk-shadow-1);
+  padding: 15px 17px;
+  transition: box-shadow 0.14s, transform 0.1s;
+}
+[data-skin='sfk'] .pmrk-stat__value {
+  font-size: 27px;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+[data-skin='sfk'] .pmrk-stat__label { font-size: 12px; }
+
+/* ───────────────────── 8. Сегмент-контрол (СФК .seg) ──────────────────────── */
+[data-skin='sfk'] .pmrk-seg {
+  background: #eef1f6;
+  border: none;
+  border-radius: 11px;
+  padding: 3px;
+}
+[data-skin='sfk'] .pmrk-seg__item { padding: 7px 13px; font-size: 12.5px; font-weight: 600; }
+[data-skin='sfk'] .pmrk-seg__item--active {
+  background: var(--color-bg-default);
+  color: var(--color-typo-brand);
+  box-shadow: var(--pmrk-shadow-1);
+}
+
+/* ───────────────────────── 9. Чипы → таблетки СФК ─────────────────────────── */
+/* радиус 20 превращает .pmrk-chip в pill СФК (точка + подпись) */
+[data-skin='sfk'] .pmrk-chip {
+  border-radius: 20px;
+  padding: 3px 10px 3px 8px;
+  font-size: 11.5px;
+}
+[data-skin='sfk'] .pmrk-dot { width: 7px; height: 7px; }
+
+/* ─────────────────────────── 10. Таблицы (СФК .dtable) ────────────────────── */
+/* высота строки фиксируется JS-виртуализацией (inline height) — её НЕ трогаем,
+   меняем только типографику шапки и горизонтальные отступы. */
+[data-skin='sfk'] .pmrk-table {
+  border-color: var(--sfk-line);
+  box-shadow: var(--pmrk-shadow-1);
+}
+[data-skin='sfk'] .pmrk-table__head {
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  color: #8a94a6;
+  border-bottom: 1px solid var(--sfk-line);
+}
+[data-skin='sfk'] .pmrk-th { padding: 11px 14px; }
+[data-skin='sfk'] .pmrk-td { padding: 9px 14px; }
+[data-skin='sfk'] .pmrk-tr { border-bottom-color: var(--sfk-line); }
+
+/* ──────────────────── 11. Фильтр-чипы / сохранённые виды ───────────────────── */
+[data-skin='sfk'] .pmrk-filterchip { border-radius: 20px; box-shadow: var(--pmrk-shadow-1); }
+[data-skin='sfk'] .pmrk-filterchip:not(.pmrk-filterchip--active) { border-color: var(--sfk-line); }
+
+/* ──────────────────────────── 12. Лента сигналов ──────────────────────────── */
+/* Лента = сплошной список строк с hairline-разделителями (паттерн .rec СФК):
+   зазор убираем, рамку-карточку/тень/скругление снимаем. Левый бордюр 3px (цвет
+   по важности из .pmrk-signal--*) остаётся акцентом строки. */
+[data-skin='sfk'] .pmrk-feed { gap: 0; }
+[data-skin='sfk'] .pmrk-feed .pmrk-signal {
+  border-top: 0;
+  border-right: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  border-bottom: 1px solid var(--sfk-line);
+}
+[data-skin='sfk'] .pmrk-feed .pmrk-signal:last-child { border-bottom: 0; }
+[data-skin='sfk'] .pmrk-feed .pmrk-signal:hover { background: var(--color-bg-secondary); box-shadow: none; }
+
+/* ─────────────────────── 13. Пустые состояния / маршрут ───────────────────── */
+[data-skin='sfk'] .pmrk-empty { padding: 56px 24px; }
+[data-skin='sfk'] .pmrk-route__step { border-color: var(--sfk-line); }
+
+/* ───────────────────── 14. Командная палитра / попапы ─────────────────────── */
+[data-skin='sfk'] .pmrk-palette { border-radius: var(--pmrk-radius-lg); box-shadow: var(--pmrk-shadow-pop); }
+
+/* ═══════════════════════════ ТЁМНАЯ ТЕМА (СФК) ════════════════════════════════
+   Consta-токены уже переключены presetGpnDark; здесь — литералы СФК под dark.
+   Семантические цвета статусов осветляются (как в родной тёмной теме ПМРК),
+   чтобы зелёный/синий не «тонули» на тёмном фоне (пользователь чувствителен
+   к контрасту). Scope: .Theme_color_gpnDark — потомок html[data-skin]. */
+[data-skin='sfk'] .Theme_color_gpnDark {
+  --sfk-line: rgba(255, 255, 255, 0.1);
+  --pmrk-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --pmrk-shadow-2: 0 6px 18px rgba(0, 0, 0, 0.5);
+  --pmrk-shadow-pop: 0 22px 52px rgba(0, 0, 0, 0.62);
+  --st-done: #2fc36b;
+  --st-work: #4aa3d8;
+  --st-soon: #f2a73c;
+  --st-over: #ff5d63;
+  --st-plan: #9aa3b2;
+}
+[data-skin='sfk'] .Theme_color_gpnDark .pmrk-content {
+  background: linear-gradient(180deg, #171c24 0%, #12161c 220px);
+}
+[data-skin='sfk'] .Theme_color_gpnDark .pmrk-sidebar { box-shadow: none; }
+[data-skin='sfk'] .Theme_color_gpnDark .pmrk-seg { background: rgba(255, 255, 255, 0.07); }
+[data-skin='sfk'] .Theme_color_gpnDark .pmrk-seg__item--active { background: var(--color-bg-default); }

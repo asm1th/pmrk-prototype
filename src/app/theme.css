@@ -1,0 +1,207 @@
+/* =============================================================================
+   ПМРК — дизайн-фундамент. Тема Consta под брендбук ГК «Газпром нефть».
+   Базис — preset Consta `gpnDefault` (это и есть брендбук ГПН).
+   Здесь: доп. токены продукта (AI-акцент, цвета риска, плотность, сетка).
+   Подробности — design/00_foundations.md.
+   ========================================================================== */
+
+:root {
+  /* --- Продуктовые токены ПМРК (поверх токенов Consta) --- */
+
+  /* AI как ткань: единый визуальный язык AI-контента (П-2/П-3 концепции).
+     Намеренно НЕ бренд-синий — чтобы граница AI всегда была видна. */
+  --pmrk-ai: #6e5ae6;
+  --pmrk-ai-strong: #5a45d6;
+  --pmrk-ai-bg: #f3f0ff;
+  --pmrk-ai-bg-2: #ece7ff;
+  --pmrk-ai-border: #d8d0fb;
+
+  /* Цветовая индикация риска (ФТ-12.8) — функциональная, не декоративная.
+     Группы кредитоспособности 1–4: зелёный → красный. */
+  --pmrk-risk-1: #0a9e54; /* группа 1 — высокая */
+  --pmrk-risk-1-bg: #e6f6ee;
+  --pmrk-risk-2: #8fb20a; /* группа 2 — приемлемая */
+  --pmrk-risk-2-bg: #f1f6e0;
+  --pmrk-risk-3: #e8920a; /* группа 3 — повышенный риск */
+  --pmrk-risk-3-bg: #fdf1de;
+  --pmrk-risk-4: #e0363b; /* группа 4 — критическая */
+  --pmrk-risk-4-bg: #fde8e9;
+
+  /* Светофор Индекса РБ 0–14 (ФТ-1.3.1) */
+  --pmrk-rb-green: #0a9e54;
+  --pmrk-rb-yellow: #e8920a;
+  --pmrk-rb-red: #e0363b;
+
+  /* Сетка/ритм рабочего пространства (FAANG-density) */
+  --pmrk-sidebar-w: 244px;
+  --pmrk-sidebar-w-collapsed: 60px;
+  --pmrk-topbar-h: 56px;
+  --pmrk-content-max: 1480px;
+  --pmrk-radius: 8px;
+  --pmrk-radius-lg: 12px;
+
+  /* Тени (мягкие, не «портальные») */
+  --pmrk-shadow-1: 0 1px 2px rgba(16, 33, 60, 0.06), 0 1px 1px rgba(16, 33, 60, 0.04);
+  --pmrk-shadow-2: 0 4px 16px rgba(16, 33, 60, 0.10), 0 1px 3px rgba(16, 33, 60, 0.06);
+  --pmrk-shadow-pop: 0 12px 40px rgba(16, 33, 60, 0.18);
+}
+
+/* Тёмная тема — фоновые токены глубже + foreground-цвета риска ЯРЧЕ,
+   иначе зелёный/оливковый текст «тонут» на тёмном (контраст < 4.5). */
+.Theme_color_gpnDark {
+  /* осветлённые акценты риска под тёмный фон (контраст ≥ 6:1) */
+  --pmrk-risk-1: #2fc36b;
+  --pmrk-risk-2: #a8cf3a;
+  --pmrk-risk-3: #f2a73c;
+  --pmrk-risk-4: #ff5d63;
+  --pmrk-rb-green: #2fc36b;
+  --pmrk-rb-yellow: #f2a73c;
+  --pmrk-rb-red: #ff5d63;
+  /* AI-акцент ярче для тёмной темы (ссылки-источники, бейджи) */
+  --pmrk-ai: #8b7bff;
+  --pmrk-ai-strong: #a99bff;
+
+  --pmrk-ai-bg: #241f3d;
+  --pmrk-ai-bg-2: #2c2650;
+  --pmrk-ai-border: #3d3470;
+  --pmrk-risk-1-bg: #11352440;
+  --pmrk-risk-2-bg: #2c351340;
+  --pmrk-risk-3-bg: #3a2a1040;
+  --pmrk-risk-4-bg: #3a161840;
+  --pmrk-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --pmrk-shadow-2: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --pmrk-shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Базовый цвет текста — из токена темы. Без этого «сырые» h1/span/div без явного
+   color наследовали ЧЁРНЫЙ (initial), который читался только на светлой теме, а на
+   тёмной — чёрный по чёрному. Ставим на каждый .Theme (вкл. портал-обёртки модалок). */
+.Theme {
+  color: var(--color-typo-primary);
+}
+
+/* button/input/select/textarea имеют СВОЙ цвет в UA-стиле (buttontext) и не
+   наследуют цвет темы → текст «сырых» кнопок (плитки действий) был тёмным на
+   тёмной теме. Заставляем наследовать. Consta-компоненты (.Button и т.п.) задают
+   цвет своими классами с большей специфичностью — их это не затрагивает. */
+button,
+input,
+select,
+textarea {
+  color: inherit;
+  font-family: inherit;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-feature-settings: 'tnum' 1; /* табличные цифры для денег/таблиц */
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* Аккуратный скроллбар — рабочий инструмент, не «портал» */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-bg-border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-bg-border);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-bg-ghost);
+  background-clip: content-box;
+}
+
+/* Утилиты плотности/ритма (по делу, не свалка) */
+.pmrk-stack {
+  display: flex;
+  flex-direction: column;
+}
+.pmrk-row {
+  display: flex;
+  align-items: center;
+}
+.pmrk-muted {
+  color: var(--color-typo-secondary);
+}
+.pmrk-tnum {
+  font-variant-numeric: tabular-nums;
+}
+.pmrk-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pmrk-clickable {
+  cursor: pointer;
+}
+
+/* Граница AI: общий «конверт» вокруг любого AI-контента */
+.pmrk-ai-surface {
+  background: linear-gradient(180deg, var(--pmrk-ai-bg) 0%, var(--pmrk-ai-bg-2) 100%);
+  border: 1px solid var(--pmrk-ai-border);
+  border-radius: var(--pmrk-radius-lg);
+  position: relative;
+}
+.pmrk-ai-accentbar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: var(--pmrk-radius-lg) 0 0 var(--pmrk-radius-lg);
+  background: linear-gradient(180deg, var(--pmrk-ai) 0%, var(--pmrk-ai-strong) 100%);
+}
+
+/* Скелетоны конкретной формы (скорость ощущается) */
+@keyframes pmrk-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.pmrk-skel {
+  background: var(--color-bg-secondary);
+  background-image: linear-gradient(
+    90deg,
+    var(--color-bg-secondary) 0px,
+    var(--color-bg-ghost) 40px,
+    var(--color-bg-secondary) 80px
+  );
+  background-size: 600px 100%;
+  animation: pmrk-shimmer 1.2s infinite linear;
+  border-radius: 6px;
+}
+
+/* Подсветка результата поиска связей (ФТ-4.3 — оранжевый) */
+.pmrk-search-hit {
+  outline: 2px solid #ff7a00;
+  outline-offset: 1px;
+}
+
+/* Лёгкие осмысленные переходы (откуда-куда), не ради анимации */
+@media (prefers-reduced-motion: no-preference) {
+  .pmrk-enter {
+    animation: pmrk-fade-up 0.18s ease-out both;
+  }
+}
+@keyframes pmrk-fade-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
