@@ -62,7 +62,7 @@ export function Help() {
 
   return (
     <div className="pmrk-page">
-      <PageHeader title="Помощь" subtitle="Инструкции, методики и НМД по работе в ПМРК. При включённом AI — консультант с цитатами-источниками." breadcrumbs={[{ label: 'Командный центр', to: '/' }, { label: 'Помощь' }]} />
+      <PageHeader title="Помощь" subtitle="Инструкции, методики и НМД по работе в ПМРК. При включённом AI — консультант с цитатами-источниками." breadcrumbs={[{ label: 'Главная', to: '/' }, { label: 'Помощь' }]} />
 
       <SectionCard title="Инструкции и материалы">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px 28px' }}>

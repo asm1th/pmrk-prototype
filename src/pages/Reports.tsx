@@ -18,7 +18,7 @@ export function Reports() {
   const navigate = useNavigate();
   return (
     <div className="pmrk-page">
-      <PageHeader title="Отчёты и выгрузки" subtitle="Заявки на отчёты и готовые выгрузки · превью того, что придёт" breadcrumbs={[{ label: 'Командный центр', to: '/' }, { label: 'Отчёты' }]} />
+      <PageHeader title="Отчёты и выгрузки" subtitle="Заявки на отчёты и готовые выгрузки · превью того, что придёт" breadcrumbs={[{ label: 'Главная', to: '/' }, { label: 'Отчёты' }]} />
 
       <SectionCard title="Запросить отчёт">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>

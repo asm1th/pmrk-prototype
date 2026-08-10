@@ -1,22 +1,19 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@consta/uikit/Button';
 import { IconAdd } from '@consta/icons/IconAdd';
 import { IconForward } from '@consta/icons/IconForward';
-import { IconSearchStroked } from '@consta/icons/IconSearchStroked';
 import { IconCalculator } from '@consta/icons/IconCalculator';
 import { IconDocFilled } from '@consta/icons/IconDocFilled';
 import { IconDownload } from '@consta/icons/IconDownload';
 import { IconConnection } from '@consta/icons/IconConnection';
 import { useApp } from '@/app/AppContext';
-import { ROLES, can, isController } from '@/shared/roles';
+import { ROLES, can } from '@/shared/roles';
 import { PageHeader, SectionCard, GroupBadge, Stat, KriList, severityColor, SEVERITY_LABEL } from '@/shared/ui/kit';
 import { TaskRow } from '@/shared/ui/TaskRow';
 import { Sparkline } from '@/shared/ui/MiniChart';
 import { AI_DIGEST } from '@/shared/mock/ai';
 import { SIGNALS, TASKS, LIMIT_REQUESTS, FAVORITES, BY_UID, REGISTRY, KRI, REPORTING_PERIOD } from '@/shared/mock/data';
 import { ago, moneyCompact, dateRu } from '@/shared/format';
-import type { Counterparty } from '@/shared/mock/types';
 
 const DASHBOARDS = [
   { title: 'Риск-индикаторы по контрагентам ГК ГПН', suid: 'СУИД: PMRK_DASH_RISK', trend: [4, 5, 6, 5, 7, 8, 9], color: 'var(--pmrk-risk-3)' },
@@ -31,11 +28,11 @@ export function CommandCenter() {
   const def = ROLES[role];
   const light = def.profile === 'light';
 
-  // Роль «Пользователь» (профиль light, ~4900 чел.) — отдельный простой экран:
-  // поиск во главе угла + «светофор» простыми словами, без портфельного жаргона.
-  if (light) return <SimpleUserHome />;
+  // У роли «Пользователь» (профиль light, ~4900 чел.) портфеля нет: раздел скрыт
+  // в меню, а прямой заход возвращаем на главную с поиском.
+  if (light) return <Navigate to="/" replace />;
 
-  const topSignals = SIGNALS.slice(0, light ? 3 : 6);
+  const topSignals = SIGNALS.slice(0, 6);
   const myTasks = TASKS.filter((t) => t.status !== 'completed');
   const myRequests = LIMIT_REQUESTS.filter((r) => r.status !== 'Утверждено');
 
@@ -43,11 +40,7 @@ export function CommandCenter() {
     <div className="pmrk-page">
       <PageHeader
         title={`Доброе утро, ${def.short === 'Контролёр ДО' ? 'Елена' : def.short}`}
-        subtitle={
-          light
-            ? 'Быстрая справка по контрагенту — введите ИНН в поиск (Ctrl K) или откройте реестр.'
-            : `${def.title} · ваш портфель и то, что требует внимания сегодня`
-        }
+        subtitle={`${def.title} · ваш портфель и то, что требует внимания сегодня`}
         actions={
           <>
             <Button size="s" view="secondary" label="Найти контрагента" iconLeft={IconForward as never} onClick={() => navigate('/registry')} />
@@ -217,134 +210,3 @@ function ActionTile({ icon, label, onClick, badge }: { icon: React.ReactNode; la
   );
 }
 
-/* ============================================================================
-   Простой экран для роли «Пользователь» (профиль light). Цель — максимальная
-   понятность: поиск компании → понятный «светофор»-вердикт простыми словами.
-   ========================================================================== */
-
-type Tone = 'good' | 'warn' | 'bad';
-const VERDICT_TONE: Record<Tone, { color: string; bg: string }> = {
-  good: { color: 'var(--pmrk-risk-1)', bg: 'var(--pmrk-risk-1-bg)' },
-  warn: { color: 'var(--pmrk-risk-3)', bg: 'var(--pmrk-risk-3-bg)' },
-  bad: { color: 'var(--pmrk-risk-4)', bg: 'var(--pmrk-risk-4-bg)' },
-};
-
-/** Перевод риск-группы/статуса/санкций в вердикт человеческим языком. */
-function userVerdict(c: Counterparty): { tone: Tone; label: string; hint: string } {
-  if (c.underSanctions || c.status === 'Банкротство' || c.status === 'Ликвидация' || c.group === 4) {
-    const why = c.underSanctions
-      ? 'компания под санкциями'
-      : c.status === 'Банкротство'
-        ? 'компания в банкротстве'
-        : c.status === 'Ликвидация'
-          ? 'компания ликвидируется'
-          : 'критический уровень риска';
-    return { tone: 'bad', label: 'Высокий риск', hint: `Лучше не работать: ${why}.` };
-  }
-  if (c.group === 3) return { tone: 'warn', label: 'С осторожностью', hint: 'Есть риски — безопаснее работать по предоплате.' };
-  return { tone: 'good', label: 'Можно работать', hint: 'Надёжная компания, обычные условия оплаты.' };
-}
-
-function VerdictPill({ tone, label }: { tone: Tone; label: string }) {
-  const t = VERDICT_TONE[tone];
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 13px', borderRadius: 999, background: t.bg, color: t.color, fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>
-      <span style={{ width: 9, height: 9, borderRadius: '50%', background: t.color, flex: 'none' }} />
-      {label}
-    </span>
-  );
-}
-
-function CompanyRow({ c, onClick }: { c: Counterparty; onClick: () => void }) {
-  const v = userVerdict(c);
-  return (
-    <button
-      onClick={onClick}
-      className="pmrk-clickable"
-      style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', padding: '12px 14px', border: '1px solid var(--color-bg-border)', borderRadius: 12, background: 'var(--color-bg-default)', cursor: 'pointer' }}
-    >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 600 }} className="pmrk-truncate">{c.name}</div>
-        <div className="pmrk-muted" style={{ fontSize: 12.5, marginTop: 2 }}>ИНН {c.inn} · {c.region}</div>
-      </div>
-      <VerdictPill tone={v.tone} label={v.label} />
-      <IconForward size="s" className="pmrk-muted" />
-    </button>
-  );
-}
-
-function SimpleUserHome() {
-  const navigate = useNavigate();
-  const [q, setQ] = useState('');
-  const query = q.trim().toLowerCase();
-
-  const results = useMemo(() => {
-    if (query.length < 2) return [];
-    return REGISTRY.filter((c) => c.name.toLowerCase().includes(query) || c.inn.includes(query)).slice(0, 8);
-  }, [query]);
-
-  const open = (uid: string) => navigate(`/counterparties/${uid}/general`);
-  const submit = () => {
-    const exact = REGISTRY.find((c) => c.inn === q.trim());
-    if (exact) open(exact.uid);
-    else if (results.length === 1) open(results[0].uid);
-  };
-
-  return (
-    <div className="pmrk-page" style={{ maxWidth: 720 }}>
-      <PageHeader title="Проверка контрагента" subtitle="Узнайте, можно ли работать с компанией — введите её название или ИНН." />
-
-      {/* Поиск — главное действие */}
-      <SectionCard>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, height: 52, padding: '0 16px', border: '1px solid var(--color-bg-border)', borderRadius: 12, background: 'var(--color-bg-default)' }}>
-            <IconSearchStroked size="s" className="pmrk-muted" />
-            <input
-              autoFocus
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && submit()}
-              placeholder="Название или ИНН компании"
-              style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 16, color: 'var(--color-typo-primary)' }}
-            />
-          </div>
-          <Button size="l" label="Проверить" onClick={submit} />
-        </div>
-        <div className="pmrk-muted" style={{ fontSize: 12, marginTop: 8 }}>Например: «Газпром нефть» или 5504036333</div>
-      </SectionCard>
-
-      {/* Результаты поиска */}
-      {query.length >= 2 && (
-        <SectionCard title={results.length ? 'Найденные компании' : 'Ничего не найдено'}>
-          {results.length ? (
-            <div className="pmrk-stack" style={{ gap: 8 }}>
-              {results.map((c) => (
-                <CompanyRow key={c.uid} c={c} onClick={() => open(c.uid)} />
-              ))}
-            </div>
-          ) : (
-            <div className="pmrk-muted" style={{ fontSize: 13 }}>Проверьте написание названия или введите ИНН (10 цифр).</div>
-          )}
-        </SectionCard>
-      )}
-
-      {/* Подсказка-светофор и недавние — когда поиск пуст */}
-      {query.length < 2 && (
-        <>
-          <SectionCard title="Недавние компании">
-            <div className="pmrk-stack" style={{ gap: 8 }}>
-              {FAVORITES.map((uid) => {
-                const c = BY_UID.get(uid);
-                return c ? <CompanyRow key={uid} c={c} onClick={() => open(uid)} /> : null;
-              })}
-            </div>
-          </SectionCard>
-
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4 }}>
-            <Button size="m" view="secondary" label="Запросить проверку новой компании" iconLeft={IconAdd as never} onClick={() => navigate('/assessments/new')} />
-          </div>
-        </>
-      )}
-    </div>
-  );
-}

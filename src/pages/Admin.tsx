@@ -17,7 +17,7 @@ export function Admin() {
   const [sec, setSec] = useState('routes');
   return (
     <div className="pmrk-page">
-      <PageHeader title="Администрирование" subtitle="Данные, справочники, маршруты, формулы, интеграции · доступ только АДМ (маршруты — также КК-УФК)" breadcrumbs={[{ label: 'Командный центр', to: '/' }, { label: 'Администрирование' }]} />
+      <PageHeader title="Администрирование" subtitle="Данные, справочники, маршруты, формулы, интеграции · доступ только АДМ (маршруты — также КК-УФК)" breadcrumbs={[{ label: 'Главная', to: '/' }, { label: 'Администрирование' }]} />
       <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16, alignItems: 'start' }}>
         <div className="pmrk-card" style={{ padding: 8 }}>
           {SECTIONS.map((s) => (

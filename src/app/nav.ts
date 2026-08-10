@@ -1,5 +1,6 @@
 import type React from 'react';
 import { IconHome } from '@consta/icons/IconHome';
+import { IconSearchStroked } from '@consta/icons/IconSearchStroked';
 import { IconTable } from '@consta/icons/IconTable';
 import { IconCalculator } from '@consta/icons/IconCalculator';
 import { IconDocFilled } from '@consta/icons/IconDocFilled';
@@ -32,8 +33,11 @@ export interface NavGroup {
 
 export const NAV: NavGroup[] = [
   {
-    title: 'Командный центр',
-    items: [{ to: '/', label: 'Командный центр', icon: IconHome }],
+    title: 'Главная',
+    items: [
+      { to: '/', label: 'Главная', icon: IconSearchStroked },
+      { to: '/command-center', label: 'Командный центр', icon: IconHome, cap: 'viewCommandCenter' },
+    ],
   },
   {
     title: 'Работа',

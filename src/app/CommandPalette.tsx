@@ -116,8 +116,8 @@ export function CommandPalette() {
             <div style={{ padding: 20, color: 'var(--color-typo-secondary)', fontSize: 14 }}>
               Ничего не найдено.{' '}
               {isInnLike && (
-                <a href="#" onClick={(e) => { e.preventDefault(); go('/registry'); }} style={{ color: 'var(--color-typo-brand)' }}>
-                  Создать профиль по ИНН {q}
+                <a href="#" onClick={(e) => { e.preventDefault(); go('/counterparties/request?q=' + encodeURIComponent(q.trim())); }} style={{ color: 'var(--color-typo-brand)' }}>
+                  Создать карточку по ИНН {q}
                 </a>
               )}
             </div>

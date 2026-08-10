@@ -10,7 +10,7 @@ export function Placeholder(props: { title: string; ft: string; bullets: string[
   const navigate = useNavigate();
   return (
     <div className="pmrk-page">
-      <PageHeader title={props.title} subtitle={`Блок представлен в карте прототипа · ${props.ft}`} breadcrumbs={[{ label: 'Командный центр', to: '/' }, { label: props.title }]} />
+      <PageHeader title={props.title} subtitle={`Блок представлен в карте прототипа · ${props.ft}`} breadcrumbs={[{ label: 'Главная', to: '/' }, { label: props.title }]} />
       <SectionCard title="Что здесь будет">
         <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7, fontSize: 14 }}>
           {props.bullets.map((b, i) => (
@@ -35,7 +35,7 @@ export function NotFound() {
         <div style={{ fontSize: 48, opacity: 0.3 }}>404</div>
         <div style={{ fontWeight: 600, color: 'var(--color-typo-primary)' }}>Страница не найдена</div>
         <div>Проверьте адрес или воспользуйтесь поиском (Ctrl K).</div>
-        <Button size="s" label="На командный центр" onClick={() => navigate('/')} />
+        <Button size="s" label="На главную" onClick={() => navigate('/')} />
       </div>
     </div>
   );

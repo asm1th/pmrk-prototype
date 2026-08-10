@@ -79,7 +79,7 @@ export function Registry() {
       <PageHeader
         title="Реестр контрагентов"
         subtitle={`${REGISTRY.length.toLocaleString('ru-RU')} карточек · виртуализация под объём до 200 тыс. (НФТ-Пр-3)`}
-        breadcrumbs={[{ label: 'Командный центр', to: '/' }, { label: 'Реестр контрагентов' }]}
+        breadcrumbs={[{ label: 'Главная', to: '/' }, { label: 'Реестр контрагентов' }]}
         actions={can(role, 'editRegistry') && <Button size="s" view="secondary" label="Изменить (АДМ)" />}
       />
 

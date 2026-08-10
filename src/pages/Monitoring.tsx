@@ -24,7 +24,7 @@ export function NotificationFeed() {
       <PageHeader
         title="Лента сигналов"
         subtitle="Умная лента: ранжирование по существенности, фильтр шума · 58 видов в 12 категориях"
-        breadcrumbs={[{ label: 'Командный центр', to: '/' }, { label: 'Лента сигналов' }]}
+        breadcrumbs={[{ label: 'Главная', to: '/' }, { label: 'Лента сигналов' }]}
         actions={<Button size="s" view="secondary" label="Правила внимания" onClick={() => navigate('/subscriptions')} />}
       />
 
@@ -88,7 +88,7 @@ export function Subscriptions() {
       <PageHeader
         title="Правила внимания"
         subtitle="Управляемые правила вместо таблицы из 58 чек-боксов · пороги и скоупы Блок/БЕ–ДО–контрагент"
-        breadcrumbs={[{ label: 'Командный центр', to: '/' }, { label: 'Правила внимания' }]}
+        breadcrumbs={[{ label: 'Главная', to: '/' }, { label: 'Правила внимания' }]}
         actions={<Button size="s" label="Сохранить настройки" />}
       />
       <div className="pmrk-muted" style={{ fontSize: 13, marginBottom: 12 }}>12 категорий × 58 видов уведомлений. Включайте правило, задавайте порог существенности и область (на что подписаны).</div>
@@ -151,7 +151,7 @@ export function Tasks() {
   const rows = apply(tab);
   return (
     <div className="pmrk-page">
-      <PageHeader title="Мои задачи" subtitle="Инбокс кредитного контролёра · задачи из всех разделов с признаком срока" breadcrumbs={[{ label: 'Командный центр', to: '/' }, { label: 'Мои задачи' }]} />
+      <PageHeader title="Мои задачи" subtitle="Инбокс кредитного контролёра · задачи из всех разделов с признаком срока" breadcrumbs={[{ label: 'Главная', to: '/' }, { label: 'Мои задачи' }]} />
       <div style={{ marginBottom: 12 }}>
         <Segmented
           value={tab}
@@ -176,7 +176,7 @@ export function Favorites() {
   const favs = ['cp-balt', 'cp-sibur', 'cp-rnsnab', 'cp-yugtrans'];
   return (
     <div className="pmrk-page">
-      <PageHeader title="Избранное" subtitle="Контрагенты с прямыми ссылками" breadcrumbs={[{ label: 'Командный центр', to: '/' }, { label: 'Избранное' }]} />
+      <PageHeader title="Избранное" subtitle="Контрагенты с прямыми ссылками" breadcrumbs={[{ label: 'Главная', to: '/' }, { label: 'Избранное' }]} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12 }}>
         {favs.map((uid) => {
           const c = BY_UID.get(uid)!;

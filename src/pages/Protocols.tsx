@@ -95,7 +95,7 @@ export function Protocols() {
       <PageHeader
         title="Протоколы КО"
         subtitle="Реестр протоколов коллегиальных органов · решения по кредитным лимитам · видимость КК и АДМ"
-        breadcrumbs={[{ label: 'Командный центр', to: '/' }, { label: 'Протоколы КО' }]}
+        breadcrumbs={[{ label: 'Главная', to: '/' }, { label: 'Протоколы КО' }]}
         actions={<Button size="s" label="Новый протокол" iconLeft={IconAdd as never} onClick={() => setCreateOpen(true)} />}
       />
 

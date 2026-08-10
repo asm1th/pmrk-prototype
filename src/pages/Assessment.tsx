@@ -128,7 +128,7 @@ export function AssessmentJournal() {
       <PageHeader
         title="Экспресс-оценки"
         subtitle="Журнал оценок кредитоспособности · 3 методики (нефть/НП · МТР/логистика · авансирование)"
-        breadcrumbs={[{ label: 'Командный центр', to: '/' }, { label: 'Экспресс-оценки' }]}
+        breadcrumbs={[{ label: 'Главная', to: '/' }, { label: 'Экспресс-оценки' }]}
         actions={<>
           {can(role, 'massAssessment') && <Button size="s" view="secondary" label="Выгрузка экспресс-оценок" onClick={() => navigate('/assessments/mass')} />}
           <Button size="s" label="Новая оценка" iconLeft={IconAdd as never} onClick={() => navigate('/assessments/new')} />

@@ -46,7 +46,7 @@ export function LimitRequestRegistry() {
       <PageHeader
         title="Кредитный лимит"
         subtitle="Реестр заявок-анкет на установление кредитного лимита · согласование по маршруту"
-        breadcrumbs={[{ label: 'Командный центр', to: '/' }, { label: 'Кредитный лимит' }]}
+        breadcrumbs={[{ label: 'Главная', to: '/' }, { label: 'Кредитный лимит' }]}
         actions={can(role, 'createLimitRequest') && <Button size="s" label="Создать заявку" iconLeft={IconAdd as never} onClick={() => navigate('/limit-requests/new')} />}
       />
       <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>

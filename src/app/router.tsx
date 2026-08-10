@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate, useParams } from 'react-router-dom';
 import { AppShell } from './AppShell';
+import { Home } from '@/pages/Home';
 import { CommandCenter } from '@/pages/CommandCenter';
+import { CounterpartyRequest } from '@/pages/CounterpartyRequest';
 import { Registry } from '@/pages/Registry';
 import { CounterpartyProfile } from '@/pages/CounterpartyProfile';
 import { CounterpartyReport } from '@/pages/CounterpartyReport';
@@ -25,11 +27,15 @@ export const router = createBrowserRouter([
     path: '/',
     element: <AppShell />,
     children: [
-      { index: true, element: <CommandCenter /> },
+      // Главная — поиск контрагента; портфель вынесен в отдельный «Командный центр».
+      { index: true, element: <Home /> },
+      { path: 'command-center', element: <CommandCenter /> },
 
       { path: 'registry', element: <Registry /> },
       { path: 'registry/:view', element: <Registry /> },
 
+      // Статический сегмент стоит перед :uid — заявка на карточку, а не профиль «request».
+      { path: 'counterparties/request', element: <CounterpartyRequest /> },
       { path: 'counterparties/:uid', element: <RedirectToTab /> },
       { path: 'counterparties/:uid/versions', element: <ProfileVersions /> },
       { path: 'counterparties/:uid/:tab', element: <CounterpartyProfile /> },
