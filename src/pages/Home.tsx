@@ -4,6 +4,17 @@ import { Button } from '@consta/uikit/Button';
 import { IconAdd } from '@consta/icons/IconAdd';
 import { IconForward } from '@consta/icons/IconForward';
 import { IconSearchStroked } from '@consta/icons/IconSearchStroked';
+import { IconAreaChart } from '@consta/icons/IconAreaChart';
+import { IconCalculator } from '@consta/icons/IconCalculator';
+import { IconFileTable } from '@consta/icons/IconFileTable';
+import { IconFilePDF } from '@consta/icons/IconFilePDF';
+import { IconGeo } from '@consta/icons/IconGeo';
+import { IconConnection } from '@consta/icons/IconConnection';
+import { IconTeam } from '@consta/icons/IconTeam';
+import { IconSpeed } from '@consta/icons/IconSpeed';
+import { IconLineAndBarChart } from '@consta/icons/IconLineAndBarChart';
+import { IconTable2 } from '@consta/icons/IconTable2';
+import { IconBook } from '@consta/icons/IconBook';
 import { useApp } from '@/app/AppContext';
 import { ROLES } from '@/shared/roles';
 import { PageHeader, SectionCard, GroupBadge } from '@/shared/ui/kit';
@@ -21,23 +32,40 @@ import type { Counterparty } from '@/shared/mock/types';
    ========================================================================== */
 
 /* Плитки главной страницы по ЕОЛ (EDT): точки входа ФТ-3.9, заявки на отчёты
-   ФТ-4.4/4.5 и ФТ-7.1/7.2. Маршруты — существующие страницы прототипа. */
-const EDT_ACTIONS: { label: string; hint: string; to: string }[] = [
-  { label: 'Провести экспресс-оценку', hint: 'Кредитоспособность контрагента (ФТ-3.1)', to: '/assessments/new' },
-  { label: 'Расчёт лимита авансирования', hint: 'Лимит авансового платежа, Ш-13.08-03', to: '/assessments/new?direction=ADVANCE' },
-  { label: 'Выгрузить экспресс-оценки', hint: 'Массовая оценка списком (ФТ-3.8)', to: '/assessments/mass' },
-  { label: 'Отчет «Профиль контрагента»', hint: 'До 10 ИНН, результат на почту (ФТ-7.1)', to: '/reports/profile-rf' },
-  { label: 'Отчет по иностранному контрагенту', hint: 'По данным СПАРК (ФТ-7.2)', to: '/reports/foreign' },
-  { label: 'Запрос отчета по аффилированности', hint: 'Связи между заданными к/а (ФТ-4.5)', to: '/reports/affiliation' },
-  { label: 'Выгрузить связанные стороны', hint: 'Отчет по шаблону Приложения 4 (ФТ-4.4)', to: '/reports/related-parties' },
+   ФТ-4.4/4.5 и ФТ-7.1/7.2. Сгруппированы по смыслу задачи, а не по номеру ФТ:
+   так пользователь ищет глазами «что сделать», а не «какое требование». */
+type EdtIcon = typeof IconForward;
+const EDT_ACTION_GROUPS: { title: string; items: { label: string; hint: string; to: string; icon: EdtIcon }[] }[] = [
+  {
+    title: 'Оценка',
+    items: [
+      { label: 'Экспресс-оценка', hint: 'Кредитоспособность контрагента (ФТ-3.1)', to: '/assessments/new', icon: IconAreaChart },
+      { label: 'Лимит авансирования', hint: 'Расчёт по методике Ш-13.08-03', to: '/assessments/new?direction=ADVANCE', icon: IconCalculator },
+      { label: 'Массовая выгрузка оценок', hint: 'Оценка списком контрагентов (ФТ-3.8)', to: '/assessments/mass', icon: IconFileTable },
+    ],
+  },
+  {
+    title: 'Отчёты',
+    items: [
+      { label: 'Профиль контрагента', hint: 'До 10 ИНН, результат на почту (ФТ-7.1)', to: '/reports/profile-rf', icon: IconFilePDF },
+      { label: 'Иностранный контрагент', hint: 'По данным СПАРК (ФТ-7.2)', to: '/reports/foreign', icon: IconGeo },
+    ],
+  },
+  {
+    title: 'Связи',
+    items: [
+      { label: 'Отчет по аффилированности', hint: 'Связи между заданными к/а (ФТ-4.5)', to: '/reports/affiliation', icon: IconConnection },
+      { label: 'Связанные стороны', hint: 'Отчет по шаблону Приложения 4 (ФТ-4.4)', to: '/reports/related-parties', icon: IconTeam },
+    ],
+  },
 ];
 
-/* Кнопки-ссылки на внешние BI-дашборды (ФТ-8.1…8.4); в прототипе — заглушки. */
-const EDT_DASHBOARDS = [
-  'Риск-индикаторы по контрагентам ГК ГПН',
-  'Мониторинг ДЗ и ПДЗ',
-  'Мониторинг авансов',
-  'Мониторинг КЗ',
+/* Внешние BI-дашборды (ФТ-8.1…8.4); в прототипе — карточки-заглушки. */
+const EDT_DASHBOARDS: { label: string; icon: EdtIcon }[] = [
+  { label: 'Риск-индикаторы по контрагентам ГК ГПН', icon: IconSpeed },
+  { label: 'Мониторинг ДЗ и ПДЗ', icon: IconLineAndBarChart },
+  { label: 'Мониторинг авансов', icon: IconTable2 },
+  { label: 'Мониторинг КЗ', icon: IconAreaChart },
 ];
 
 type Tone = 'good' | 'warn' | 'bad';
@@ -119,7 +147,7 @@ export function Home() {
   return (
     <div className="pmrk-page" style={{ maxWidth: 760 }}>
       <PageHeader
-        title="Главная"
+        title="Кредитный контроль ГК"
         subtitle={
           simple
             ? 'Узнайте, можно ли работать с компанией — введите её название или ИНН.'
@@ -190,45 +218,65 @@ export function Home() {
         </SectionCard>
       )}
 
-      {/* Плитки действий из ЕОЛ: прячем во время поиска, чтобы не конкурировать
-          с результатами за внимание. */}
+      {/* Плитки действий из ЕОЛ: три смысловые колонки с иконками; прячем во время
+          поиска, чтобы не конкурировать с результатами за внимание. */}
       {!searched && (
         <SectionCard title="Действия">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 8 }}>
-            {EDT_ACTIONS.map((a) => (
-              <button
-                key={a.to}
-                onClick={() => navigate(a.to)}
-                className="pmrk-clickable"
-                style={{ display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '12px 14px', border: '1px solid var(--color-bg-border)', borderRadius: 12, background: 'var(--color-bg-default)', cursor: 'pointer' }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{a.label}</div>
-                  <div className="pmrk-muted" style={{ fontSize: 12, marginTop: 2 }}>{a.hint}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+            {EDT_ACTION_GROUPS.map((g) => (
+              <div key={g.title}>
+                <div className="pmrk-muted" style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>{g.title}</div>
+                <div className="pmrk-stack" style={{ gap: 6 }}>
+                  {g.items.map((a) => {
+                    const TileIcon = a.icon;
+                    return (
+                      <button
+                        key={a.to}
+                        onClick={() => navigate(a.to)}
+                        className="pmrk-clickable"
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '10px 12px', border: '1px solid var(--color-bg-border)', borderRadius: 12, background: 'var(--color-bg-default)', cursor: 'pointer' }}
+                      >
+                        <TileIcon size="s" style={{ color: 'var(--color-typo-brand)', flex: 'none' }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600 }}>{a.label}</div>
+                          <div className="pmrk-muted" style={{ fontSize: 12, marginTop: 2 }}>{a.hint}</div>
+                        </div>
+                        <IconForward size="xs" className="pmrk-muted" style={{ flex: 'none' }} />
+                      </button>
+                    );
+                  })}
                 </div>
-                <IconForward size="s" className="pmrk-muted" />
-              </button>
+              </div>
             ))}
           </div>
         </SectionCard>
       )}
 
-      {/* Дашборды (ФТ-8.1…8.4) — внешние BI, в прототипе не подключены; обучение (ФТ-9.4) */}
+      {/* Дашборды (ФТ-8.1…8.4) — карточки внешних BI (в прототипе не подключены);
+          обучение (ФТ-9.4) — тихой кнопкой под ними. */}
       {!searched && (
-        <SectionCard title="Дашборды и обучение">
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-            {EDT_DASHBOARDS.map((d) => (
-              <a
-                key={d}
-                href="#"
-                onClick={(e) => e.preventDefault()}
-                title="Внешний BI-дашборд — в прототипе не подключён"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid var(--color-bg-border)', borderRadius: 999, fontSize: 13, textDecoration: 'none', color: 'var(--color-typo-secondary)', background: 'var(--color-bg-default)' }}
-              >
-                {d} ↗
-              </a>
-            ))}
-            <Button size="s" view="secondary" label="Обучение работе на Платформе" onClick={() => navigate('/help')} />
+        <SectionCard title="Дашборды">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 }}>
+            {EDT_DASHBOARDS.map((d) => {
+              const CardIcon = d.icon;
+              return (
+                <a
+                  key={d.label}
+                  href="#"
+                  onClick={(e) => e.preventDefault()}
+                  title="Внешний BI-дашборд — в прототипе не подключён"
+                  className="pmrk-clickable"
+                  style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', border: '1px solid var(--color-bg-border)', borderRadius: 12, background: 'var(--color-bg-default)', textDecoration: 'none' }}
+                >
+                  <CardIcon size="m" style={{ color: 'var(--color-typo-brand)' }} />
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-typo-primary)', lineHeight: 1.3 }}>{d.label}</div>
+                  <div className="pmrk-muted" style={{ fontSize: 11 }}>BI · внешняя ссылка ↗</div>
+                </a>
+              );
+            })}
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <Button size="s" view="ghost" label="Обучение работе на Платформе" iconLeft={IconBook as never} onClick={() => navigate('/help')} />
           </div>
         </SectionCard>
       )}
