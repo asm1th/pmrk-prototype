@@ -20,6 +20,26 @@ import type { Counterparty } from '@/shared/mock/types';
    убеждается, что контрагента нет, и только потом заводит заявку (ФТ-1.22…1.24).
    ========================================================================== */
 
+/* Плитки главной страницы по ЕОЛ (EDT): точки входа ФТ-3.9, заявки на отчёты
+   ФТ-4.4/4.5 и ФТ-7.1/7.2. Маршруты — существующие страницы прототипа. */
+const EDT_ACTIONS: { label: string; hint: string; to: string }[] = [
+  { label: 'Провести экспресс-оценку', hint: 'Кредитоспособность контрагента (ФТ-3.1)', to: '/assessments/new' },
+  { label: 'Расчёт лимита авансирования', hint: 'Лимит авансового платежа, Ш-13.08-03', to: '/assessments/new?direction=ADVANCE' },
+  { label: 'Выгрузить экспресс-оценки', hint: 'Массовая оценка списком (ФТ-3.8)', to: '/assessments/mass' },
+  { label: 'Отчет «Профиль контрагента»', hint: 'До 10 ИНН, результат на почту (ФТ-7.1)', to: '/reports/profile-rf' },
+  { label: 'Отчет по иностранному контрагенту', hint: 'По данным СПАРК (ФТ-7.2)', to: '/reports/foreign' },
+  { label: 'Запрос отчета по аффилированности', hint: 'Связи между заданными к/а (ФТ-4.5)', to: '/reports/affiliation' },
+  { label: 'Выгрузить связанные стороны', hint: 'Отчет по шаблону Приложения 4 (ФТ-4.4)', to: '/reports/related-parties' },
+];
+
+/* Кнопки-ссылки на внешние BI-дашборды (ФТ-8.1…8.4); в прототипе — заглушки. */
+const EDT_DASHBOARDS = [
+  'Риск-индикаторы по контрагентам ГК ГПН',
+  'Мониторинг ДЗ и ПДЗ',
+  'Мониторинг авансов',
+  'Мониторинг КЗ',
+];
+
 type Tone = 'good' | 'warn' | 'bad';
 
 const VERDICT_TONE: Record<Tone, { color: string; bg: string }> = {
@@ -166,6 +186,49 @@ export function Home() {
               const c = BY_UID.get(uid);
               return c ? <CompanyRow key={uid} c={c} simple={simple} onClick={() => open(uid)} /> : null;
             })}
+          </div>
+        </SectionCard>
+      )}
+
+      {/* Плитки действий из ЕОЛ: прячем во время поиска, чтобы не конкурировать
+          с результатами за внимание. */}
+      {!searched && (
+        <SectionCard title="Действия">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 8 }}>
+            {EDT_ACTIONS.map((a) => (
+              <button
+                key={a.to}
+                onClick={() => navigate(a.to)}
+                className="pmrk-clickable"
+                style={{ display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '12px 14px', border: '1px solid var(--color-bg-border)', borderRadius: 12, background: 'var(--color-bg-default)', cursor: 'pointer' }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{a.label}</div>
+                  <div className="pmrk-muted" style={{ fontSize: 12, marginTop: 2 }}>{a.hint}</div>
+                </div>
+                <IconForward size="s" className="pmrk-muted" />
+              </button>
+            ))}
+          </div>
+        </SectionCard>
+      )}
+
+      {/* Дашборды (ФТ-8.1…8.4) — внешние BI, в прототипе не подключены; обучение (ФТ-9.4) */}
+      {!searched && (
+        <SectionCard title="Дашборды и обучение">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+            {EDT_DASHBOARDS.map((d) => (
+              <a
+                key={d}
+                href="#"
+                onClick={(e) => e.preventDefault()}
+                title="Внешний BI-дашборд — в прототипе не подключён"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid var(--color-bg-border)', borderRadius: 999, fontSize: 13, textDecoration: 'none', color: 'var(--color-typo-secondary)', background: 'var(--color-bg-default)' }}
+              >
+                {d} ↗
+              </a>
+            ))}
+            <Button size="s" view="secondary" label="Обучение работе на Платформе" onClick={() => navigate('/help')} />
           </div>
         </SectionCard>
       )}
