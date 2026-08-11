@@ -6,6 +6,10 @@ import { IconFavoriteStroked } from '@consta/icons/IconFavoriteStroked';
 import { IconFavoriteFilled } from '@consta/icons/IconFavoriteFilled';
 import { IconRing } from '@consta/icons/IconRing';
 import { IconDownload } from '@consta/icons/IconDownload';
+import { IconFileDocument } from '@consta/icons/IconFileDocument';
+import { IconFilePDF } from '@consta/icons/IconFilePDF';
+import { IconDocExport } from '@consta/icons/IconDocExport';
+import { IconAlert } from '@consta/icons/IconAlert';
 import { IconConnection } from '@consta/icons/IconConnection';
 import { useApp } from '@/app/AppContext';
 import { useSetPageMeta } from '@/app/PageMeta';
@@ -116,11 +120,13 @@ export function CounterpartyProfile() {
                 <Button size="s" view={subscribed ? 'primary' : 'secondary'} label={subscribed ? 'Вы подписаны' : 'Подписаться'} iconLeft={IconRing as never} onClick={() => setSubscribed((v) => !v)} />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: 360 }}>
-              <Button size="xs" view="clear" label="Выписка ЕГРЮЛ" iconLeft={IconDownload as never} />
-              <Button size="xs" view="clear" label="Профиль (PDF)" iconLeft={IconDownload as never} title="Сформировать и скачать профиль контрагента (ФТ-7.1)" onClick={() => navigate(`/report/${c.uid}`)} />
-              <Button size="xs" view="clear" label="СПАРК-Профиль" iconLeft={IconDownload as never} />
-              <Button size="xs" view="clear" label="СПАРК-Риски" iconLeft={IconDownload as never} />
+            {/* Документы шапки (ФТ-1.16…1.19): полноценные кнопки с различимыми
+                иконками — по типу документа, а не одинаковая «скачать». */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              <Button size="s" view="secondary" label="Выписка ЕГРЮЛ" iconLeft={IconFileDocument as never} title="Скачать выписку из ЕГРЮЛ/ЕГРИП, .pdf (ФТ-1.16)" />
+              <Button size="s" view="secondary" label="Профиль (PDF)" iconLeft={IconFilePDF as never} title="Сформировать и скачать отчет «Профиль контрагента» (ФТ-1.17)" onClick={() => navigate(`/report/${c.uid}`)} />
+              <Button size="s" view="secondary" label="СПАРК-Профиль" iconLeft={IconDocExport as never} title="Скачать расширенный отчет «СПАРК-Профиль», .pdf (ФТ-1.18)" />
+              <Button size="s" view="secondary" label="СПАРК-Риски" iconLeft={IconAlert as never} title="Скачать отчет «СПАРК-Риски», .pdf (ФТ-1.19)" />
             </div>
           </div>
         </div>
