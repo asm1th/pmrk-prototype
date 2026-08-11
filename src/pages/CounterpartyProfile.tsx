@@ -88,7 +88,7 @@ export function CounterpartyProfile() {
             <a onClick={() => navigate('/registry')} style={{ cursor: 'pointer' }}>Реестр контрагентов</a> / {c.shortName}
           </div>
         )}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 4 }}>
           <div style={{ flex: 1 }}>
             {skin !== 'sfk' && (
               <h1 style={{ margin: '2px 0 6px', fontSize: 22, fontWeight: 700, lineHeight: 1.2 }}>
@@ -120,15 +120,16 @@ export function CounterpartyProfile() {
                 <Button size="s" view={subscribed ? 'primary' : 'secondary'} label={subscribed ? 'Вы подписаны' : 'Подписаться'} iconLeft={IconRing as never} onClick={() => setSubscribed((v) => !v)} />
               </div>
             </div>
-            {/* Документы шапки (ФТ-1.16…1.19): полноценные кнопки с различимыми
-                иконками — по типу документа, а не одинаковая «скачать». */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              <Button size="s" view="secondary" label="Выписка ЕГРЮЛ" iconLeft={IconFileDocument as never} title="Скачать выписку из ЕГРЮЛ/ЕГРИП, .pdf (ФТ-1.16)" />
-              <Button size="s" view="secondary" label="Профиль (PDF)" iconLeft={IconFilePDF as never} title="Сформировать и скачать отчет «Профиль контрагента» (ФТ-1.17)" onClick={() => navigate(`/report/${c.uid}`)} />
-              <Button size="s" view="secondary" label="СПАРК-Профиль" iconLeft={IconDocExport as never} title="Скачать расширенный отчет «СПАРК-Профиль», .pdf (ФТ-1.18)" />
-              <Button size="s" view="secondary" label="СПАРК-Риски" iconLeft={IconAlert as never} title="Скачать отчет «СПАРК-Риски», .pdf (ФТ-1.19)" />
-            </div>
           </div>
+        </div>
+
+        {/* Панель документов (ФТ-1.16…1.19): ряд на всю ширину под бейджами —
+            подписи и различимые иконки сохраняют явность, но тише CTA «Подписаться». */}
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
+          <Button size="s" view="ghost" label="Выписка ЕГРЮЛ" iconLeft={IconFileDocument as never} title="Скачать выписку из ЕГРЮЛ/ЕГРИП, .pdf (ФТ-1.16)" />
+          <Button size="s" view="ghost" label="Профиль (PDF)" iconLeft={IconFilePDF as never} title="Сформировать и скачать отчет «Профиль контрагента» (ФТ-1.17)" onClick={() => navigate(`/report/${c.uid}`)} />
+          <Button size="s" view="ghost" label="СПАРК-Профиль" iconLeft={IconDocExport as never} title="Скачать расширенный отчет «СПАРК-Профиль», .pdf (ФТ-1.18)" />
+          <Button size="s" view="ghost" label="СПАРК-Риски" iconLeft={IconAlert as never} title="Скачать отчет «СПАРК-Риски», .pdf (ФТ-1.19)" />
         </div>
 
         {/* Вкладки — sticky навигация */}
