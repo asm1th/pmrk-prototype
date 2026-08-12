@@ -6,6 +6,8 @@ import { CounterpartyRequest } from '@/pages/CounterpartyRequest';
 import { Registry } from '@/pages/Registry';
 import { CounterpartyProfile } from '@/pages/CounterpartyProfile';
 import { CounterpartyReport } from '@/pages/CounterpartyReport';
+import { SparkProfileReport } from '@/pages/SparkProfileReport';
+import { EgrulExtract, SparkRisksReport } from '@/pages/ExtraReports';
 import { ProfileVersions } from '@/pages/ProfileVersions';
 import { AssessmentJournal, AssessmentCreate, AssessmentForm, MassAssessment } from '@/pages/Assessment';
 import { LimitRequestRegistry, LimitRequestCreate, LimitRequestPage } from '@/pages/LimitRequest';
@@ -71,6 +73,9 @@ export const router = createBrowserRouter([
 
   // Скачиваемый профиль — вне оболочки приложения (чистая страница для печати в PDF)
   { path: '/report/:uid', element: <CounterpartyReport /> },
+  { path: '/report/:uid/spark', element: <SparkProfileReport /> },
+  { path: '/report/:uid/egrul', element: <EgrulExtract /> },
+  { path: '/report/:uid/spark-risks', element: <SparkRisksReport /> },
 ], {
   // На GitHub Pages приложение живёт в подпапке /<repo>/ — роутер должен отбрасывать
   // этот префикс, иначе ни один маршрут не совпадёт. Локально BASE_URL = '/' → ''.
