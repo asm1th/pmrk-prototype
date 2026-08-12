@@ -145,7 +145,7 @@ export function Home() {
   };
 
   return (
-    <div className="pmrk-page" style={{ maxWidth: 760 }}>
+    <div className="pmrk-page">
       <PageHeader
         title="Кредитный контроль ГК"
         subtitle={
@@ -206,79 +206,75 @@ export function Home() {
         </SectionCard>
       )}
 
-      {/* Поиск ещё не начат — недавние контрагенты как быстрый вход */}
+      {/* Поиск ещё не начат — недавние контрагенты, действия и дашборды в один ряд */}
       {!searched && (
-        <SectionCard title="Недавние контрагенты">
-          <div className="pmrk-stack" style={{ gap: 8 }}>
-            {FAVORITES.map((uid) => {
-              const c = BY_UID.get(uid);
-              return c ? <CompanyRow key={uid} c={c} simple={simple} onClick={() => open(uid)} /> : null;
-            })}
-          </div>
-        </SectionCard>
-      )}
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(340px, 1.1fr) minmax(430px, 1.3fr) minmax(280px, 0.9fr)', gap: 16, alignItems: 'stretch' }}>
+          <SectionCard title="Недавние контрагенты">
+            <div className="pmrk-stack" style={{ gap: 8 }}>
+              {FAVORITES.map((uid) => {
+                const c = BY_UID.get(uid);
+                return c ? <CompanyRow key={uid} c={c} simple={simple} onClick={() => open(uid)} /> : null;
+              })}
+            </div>
+          </SectionCard>
 
-      {/* Плитки действий из ЕОЛ: три смысловые колонки с иконками; прячем во время
-          поиска, чтобы не конкурировать с результатами за внимание. */}
-      {!searched && (
-        <SectionCard title="Действия">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-            {EDT_ACTION_GROUPS.map((g) => (
-              <div key={g.title}>
-                <div className="pmrk-muted" style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>{g.title}</div>
-                <div className="pmrk-stack" style={{ gap: 6 }}>
-                  {g.items.map((a) => {
-                    const TileIcon = a.icon;
-                    return (
-                      <button
-                        key={a.to}
-                        onClick={() => navigate(a.to)}
-                        className="pmrk-clickable"
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '10px 12px', border: '1px solid var(--color-bg-border)', borderRadius: 12, background: 'var(--color-bg-default)', cursor: 'pointer' }}
-                      >
-                        <TileIcon size="s" style={{ color: 'var(--color-typo-brand)', flex: 'none' }} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 14, fontWeight: 600 }}>{a.label}</div>
-                          <div className="pmrk-muted" style={{ fontSize: 12, marginTop: 2 }}>{a.hint}</div>
-                        </div>
-                        <IconForward size="xs" className="pmrk-muted" style={{ flex: 'none' }} />
-                      </button>
-                    );
-                  })}
+          {/* Плитки действий из ЕОЛ: три смысловые колонки с иконками. */}
+          <SectionCard title="Действия">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+              {EDT_ACTION_GROUPS.map((g) => (
+                <div key={g.title} style={{ minWidth: 0 }}>
+                  <div className="pmrk-muted" style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>{g.title}</div>
+                  <div className="pmrk-stack" style={{ gap: 6 }}>
+                    {g.items.map((a) => {
+                      const TileIcon = a.icon;
+                      return (
+                        <button
+                          key={a.to}
+                          onClick={() => navigate(a.to)}
+                          className="pmrk-clickable"
+                          style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6, width: '100%', minWidth: 0, textAlign: 'left', padding: '10px 12px', border: '1px solid var(--color-bg-border)', borderRadius: 12, background: 'var(--color-bg-default)', cursor: 'pointer' }}
+                        >
+                          <TileIcon size="s" style={{ color: 'var(--color-typo-brand)', flex: 'none' }} />
+                          <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.25, overflowWrap: 'anywhere' }}>{a.label}</div>
+                          <div className="pmrk-muted" style={{ fontSize: 11, lineHeight: 1.3, overflowWrap: 'anywhere' }}>{a.hint}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
-      )}
+              ))}
+            </div>
+          </SectionCard>
 
-      {/* Дашборды (ФТ-8.1…8.4) — карточки внешних BI (в прототипе не подключены);
-          обучение (ФТ-9.4) — тихой кнопкой под ними. */}
-      {!searched && (
-        <SectionCard title="Дашборды">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 }}>
-            {EDT_DASHBOARDS.map((d) => {
-              const CardIcon = d.icon;
-              return (
-                <a
-                  key={d.label}
-                  href="#"
-                  onClick={(e) => e.preventDefault()}
-                  title="Внешний BI-дашборд — в прототипе не подключён"
-                  className="pmrk-clickable"
-                  style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', border: '1px solid var(--color-bg-border)', borderRadius: 12, background: 'var(--color-bg-default)', textDecoration: 'none' }}
-                >
-                  <CardIcon size="m" style={{ color: 'var(--color-typo-brand)' }} />
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-typo-primary)', lineHeight: 1.3 }}>{d.label}</div>
-                  <div className="pmrk-muted" style={{ fontSize: 11 }}>BI · внешняя ссылка ↗</div>
-                </a>
-              );
-            })}
-          </div>
-          <div style={{ marginTop: 10 }}>
-            <Button size="s" view="ghost" label="Обучение работе на Платформе" iconLeft={IconBook as never} onClick={() => navigate('/help')} />
-          </div>
-        </SectionCard>
+          {/* Дашборды (ФТ-8.1…8.4) — карточки внешних BI (в прототипе не подключены);
+              обучение (ФТ-9.4) — тихой кнопкой под ними. */}
+          <SectionCard title="Дашборды">
+            <div className="pmrk-stack" style={{ gap: 8 }}>
+              {EDT_DASHBOARDS.map((d) => {
+                const CardIcon = d.icon;
+                return (
+                  <a
+                    key={d.label}
+                    href="#"
+                    onClick={(e) => e.preventDefault()}
+                    title="Внешний BI-дашборд — в прототипе не подключён"
+                    className="pmrk-clickable"
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: '1px solid var(--color-bg-border)', borderRadius: 12, background: 'var(--color-bg-default)', textDecoration: 'none' }}
+                  >
+                    <CardIcon size="m" style={{ color: 'var(--color-typo-brand)', flex: 'none' }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-typo-primary)', lineHeight: 1.3 }} className="pmrk-truncate">{d.label}</div>
+                      <div className="pmrk-muted" style={{ fontSize: 11 }}>BI · внешняя ссылка ↗</div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <Button size="s" view="ghost" label="Обучение работе на Платформе" iconLeft={IconBook as never} onClick={() => navigate('/help')} />
+            </div>
+          </SectionCard>
+        </div>
       )}
     </div>
   );
