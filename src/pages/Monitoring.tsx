@@ -14,10 +14,21 @@ export function NotificationFeed() {
   const navigate = useNavigate();
   const { aiOn } = useApp();
   const [sev, setSev] = useState<SignalSeverity | 'all'>('all');
+  const [rules, setRules] = useState<Set<string>>(new Set());
   const [signals, setSignals] = useState(SIGNALS);
 
-  const filtered = signals.filter((s) => sev === 'all' || s.severity === sev);
+  const bySeverity = signals.filter((s) => sev === 'all' || s.severity === sev);
+  const filtered = bySeverity.filter((s) => rules.size === 0 || rules.has(s.category));
   const markRead = (id: string) => setSignals((prev) => prev.map((s) => (s.id === id ? { ...s, read: true } : s)));
+
+  const toggleRule = (name: string) => {
+    setRules((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  };
 
   return (
     <div className="pmrk-page">
@@ -37,11 +48,34 @@ export function NotificationFeed() {
       )}
 
       <div className="pmrk-filterbar">
+        <span className="pmrk-muted" style={{ fontSize: 12, width: 82, flex: 'none', whiteSpace: 'nowrap' }}>Критичность:</span>
         {(['all', 'critical', 'high', 'medium', 'low'] as const).map((s) => (
           <div key={s} className={`pmrk-filterchip ${sev === s ? 'pmrk-filterchip--active' : ''}`} onClick={() => setSev(s)}>
             {s === 'all' ? 'Все' : SEVERITY_LABEL[s]}
           </div>
         ))}
+      </div>
+
+      {/* Фильтр по правилам из «Правил внимания» — множественный выбор, в отличие
+          от важности выше: можно смотреть сразу несколько категорий сигналов. */}
+      <div className="pmrk-filterbar" style={{ marginTop: -4 }}>
+        <span className="pmrk-muted" style={{ fontSize: 12, width: 82, flex: 'none', whiteSpace: 'nowrap' }}>Правило:</span>
+        <div className={`pmrk-filterchip ${rules.size === 0 ? 'pmrk-filterchip--active' : ''}`} onClick={() => setRules(new Set())}>
+          Все
+        </div>
+        {CATEGORIES.map((c) => {
+          const count = bySeverity.filter((s) => s.category === c.name).length;
+          return (
+            <div
+              key={c.name}
+              className={`pmrk-filterchip ${rules.has(c.name) ? 'pmrk-filterchip--active' : ''}`}
+              onClick={() => toggleRule(c.name)}
+              style={count === 0 ? { opacity: 0.45 } : undefined}
+            >
+              {c.name}
+            </div>
+          );
+        })}
       </div>
 
       <div className="pmrk-feed">
