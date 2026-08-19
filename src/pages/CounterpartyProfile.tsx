@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useId, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@consta/uikit/Button';
 import { Modal } from '@consta/uikit/Modal';
@@ -225,6 +225,114 @@ function GeneralTab({ c }: { c: Counterparty }) {
 
 const extLevelColor = (l?: string) => (l === 'high' ? 'var(--pmrk-risk-4)' : l === 'medium' ? 'var(--pmrk-risk-3)' : l === 'low' ? 'var(--pmrk-risk-1)' : 'var(--color-typo-primary)');
 
+/** Плоская иконка «сводного риска» — кольцо (пончик), разрезанное строго вертикально
+    на 2 половины (левую и правую) прямым разрезом фиксированной ширины 2px.
+    Авторский холст (viewBox) 256×256, в интерфейсе выводится через проп size.
+    Разрез вырезан прямоугольной SVG-маской, а не угловым зазором (strokeDasharray):
+    угловой зазор на широком кольце превращается в клин — шире у внешнего края,
+    у́же у отверстия, — а маска-прямоугольник даёт одинаковую ширину разреза на
+    любом радиусе. Ширина задана как реальные 2px на экране, а не доля холста:
+    при масштабировании 2px от 256 стали бы долями пикселя и пропали бы — поэтому
+    пересчитывается от size, чтобы на экране всегда было ровно 2px. Цвет — по
+    уровню риска, тот же токен, что и у текстового значения строки. */
+function RiskDonutIcon({ color, size = 48 }: { color: string; size?: number }) {
+  const maskId = useId();
+  const outerR = 114; // внешний край кольца — не меняется
+  const innerR = 50; // внутреннее отверстие — немного увеличено (было 35)
+  const r = (outerR + innerR) / 2; // радиус для отрисовки stroke — середина кольца
+  const strokeWidth = outerR - innerR; // толщина кольца подстраивается под отверстие
+  const cutOnScreenPx = 2;
+  const cut = (cutOnScreenPx * 256) / size; // 2 реальных px, переведённые в единицы холста 256
+  return (
+    <svg width={size} height={size} viewBox="0 0 256 256" style={{ flex: 'none' }} aria-hidden>
+      {/* maskUnits/x/y/width/height явно на весь холст: по умолчанию область маски
+          считается от геометрического bbox круга (радиус r, без учёта толщины
+          обводки) — при таком толстом кольце это обрезало внешний край квадратной
+          рамкой, и кольцо визуально превращалось в восьмиугольник. */}
+      <mask id={maskId} maskUnits="userSpaceOnUse" x={0} y={0} width={256} height={256}>
+        <rect x={0} y={0} width={256} height={256} fill="#fff" />
+        {/* вертикальная полоса фиксированной ширины cut — прямой разрез сверху донизу */}
+        <rect x={128 - cut / 2} y={0} width={cut} height={256} fill="#000" />
+      </mask>
+      <circle cx={128} cy={128} r={r} fill="none" stroke={color} strokeWidth={strokeWidth} mask={`url(#${maskId})`} />
+    </svg>
+  );
+}
+
+/** Индикаторы, для которых вместо цветной точки выводится кольцевая иконка
+    (RiskDonutIcon) — итоговые вердикты риска, где визуальный акцент важнее
+    остальных строк списка. */
+const DONUT_INDICATOR_LABELS = new Set(['Сводный риск', 'Индекс финансового риска (ИФР)']);
+
+/** Индикаторы со значением, вписанным в геометрическую фигуру (RiskShapeIcon):
+    форма — часть кодирования уровня риска, в дополнение к цвету. */
+const SHAPE_INDICATOR_LABELS = new Set(['Индекс должной осмотрительности (ИДО)', 'Индекс платёжной дисциплины (ИПД)']);
+
+/** Иконка «Индекс должной осмотрительности» / «Индекс платёжной дисциплины» —
+    фигура со значением внутри. Форма зависит от уровня риска (та же градация,
+    что и цвет текста в остальных строках): круг — низкий/зелёный, квадрат —
+    средний/жёлтый, шестигранник — высокий/красный. Обводка толстая (16 из 256
+    холста, ≈3px на реальном размере), чтобы форма чётко читалась. Число внутри —
+    крупным жирным кеглем; у ИПД исходное значение вида «99 / 100» — постоянный
+    знаменатель на каждой иконке не несёт информации и не поместился бы читаемо,
+    поэтому внутрь идёт только числитель (при 3 цифрах кегль уменьшается, чтобы
+    не тесно). Авторский холст и размер на экране те же, что и у RiskDonutIcon. */
+function RiskShapeIcon({ value, level, color, size = 48 }: { value: string; level: 'low' | 'medium' | 'high'; color: string; size?: number }) {
+  const strokeWidth = 16;
+  const cx = 128;
+  const cy = 128;
+  const displayValue = value.split(' / ')[0];
+  const fontSize = displayValue.length >= 3 ? 74 : 92;
+
+  let shape: React.ReactNode;
+  if (level === 'low') {
+    shape = <circle cx={cx} cy={cy} r={100} fill="none" stroke={color} strokeWidth={strokeWidth} />;
+  } else if (level === 'medium') {
+    const half = 98;
+    shape = <rect x={cx - half} y={cy - half} width={half * 2} height={half * 2} rx={20} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />;
+  } else {
+    const r = 108;
+    const points = Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI / 180) * (-90 + i * 60);
+      return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+    }).join(' ');
+    shape = <polygon points={points} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />;
+  }
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 256 256" style={{ flex: 'none' }} aria-hidden>
+      {shape}
+      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={fontSize} fontWeight={700} fill={color}>{displayValue}</text>
+    </svg>
+  );
+}
+
+/** Визуальное представление значения индикатора — donut / фигура-с-числом / точка
+    с текстом, в зависимости от лейбла. Общая часть для строки списка (IndRow)
+    и для карточки в горизонтальной сводке (SummaryItem) — сводка показывает
+    «ту же иконку и значения», что и основной список, одним и тем же кодом. */
+function IndicatorVisual({ ind }: { ind: Indicator }) {
+  const useDonut = DONUT_INDICATOR_LABELS.has(ind.label);
+  const useShape = SHAPE_INDICATOR_LABELS.has(ind.label);
+  if (useDonut && ind.level) {
+    return (
+      <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+        <RiskDonutIcon color={extLevelColor(ind.level)} />
+        <span style={{ fontWeight: 600, color: extLevelColor(ind.level), textAlign: 'center' }}>{ind.value}</span>
+      </span>
+    );
+  }
+  if (useShape && ind.level) {
+    return <RiskShapeIcon value={ind.value} level={ind.level as 'low' | 'medium' | 'high'} color={extLevelColor(ind.level)} />;
+  }
+  return (
+    <span style={{ fontWeight: 600, color: extLevelColor(ind.level), textAlign: 'right' }}>
+      {ind.level && <span className="pmrk-dot" style={{ background: extLevelColor(ind.level), marginRight: 6 }} />}
+      {ind.value}
+    </span>
+  );
+}
+
 function IndRow({ ind }: { ind: Indicator }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--color-bg-border)', fontSize: 13 }}>
@@ -232,15 +340,41 @@ function IndRow({ ind }: { ind: Indicator }) {
         {ind.label}
         {ind.tip && <span title={ind.tip} style={{ marginLeft: 6, cursor: 'help', color: 'var(--color-typo-ghost)', fontSize: 12 }}>ⓘ</span>}
       </span>
-      <span style={{ fontWeight: 600, color: extLevelColor(ind.level), textAlign: 'right' }}>
-        {ind.level && <span className="pmrk-dot" style={{ background: extLevelColor(ind.level), marginRight: 6 }} />}
-        {ind.value}
-      </span>
+      <IndicatorVisual ind={ind} />
     </div>
   );
 }
 
-function ExtAccordion({ title, indicators, defaultOpen, children }: { title: string; indicators?: Indicator[]; defaultOpen?: boolean; children?: React.ReactNode }) {
+/** Короткие подписи для горизонтальной сводки — полные названия там не нужны. */
+const SHORT_LABEL: Record<string, string> = {
+  'Сводный риск': 'Риск',
+  'Индекс должной осмотрительности (ИДО)': 'ИДО',
+  'Индекс финансового риска (ИФР)': 'ИФР',
+  'Индекс платёжной дисциплины (ИПД)': 'ИПД',
+};
+
+/** Горизонтальная сводка индикаторов раздела «1. Финансовые индикаторы риска
+    СПАРК» — те же 4 значения из основного списка ниже, но компактно в ряд:
+    короткая подпись (с той же подсказкой ⓘ, что и в списке) сверху, иконка
+    и значение снизу. Отделена от списка собственной рамкой снизу — визуально
+    самостоятельный блок в границах того же раздела. */
+function RiskSummaryBar({ indicators }: { indicators: Indicator[] }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-around', gap: 12, padding: '4px 4px 20px', marginBottom: 16, borderBottom: '1px solid var(--color-bg-border)' }}>
+      {indicators.map((ind, i) => (
+        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-typo-secondary)' }}>
+            {SHORT_LABEL[ind.label] ?? ind.label}
+            {ind.tip && <span title={ind.tip} style={{ marginLeft: 4, cursor: 'help', color: 'var(--color-typo-ghost)', fontSize: 11 }}>ⓘ</span>}
+          </span>
+          <IndicatorVisual ind={ind} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ExtAccordion({ title, indicators, defaultOpen, beforeIndicators, children }: { title: string; indicators?: Indicator[]; defaultOpen?: boolean; beforeIndicators?: React.ReactNode; children?: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const risky = indicators?.filter((i) => i.level === 'high' || i.level === 'medium').length ?? 0;
   return (
@@ -252,6 +386,7 @@ function ExtAccordion({ title, indicators, defaultOpen, children }: { title: str
       </div>
       {open && (
         <div style={{ borderTop: '1px solid var(--color-bg-border)', padding: '4px 16px 12px' }}>
+          {beforeIndicators}
           {indicators?.map((ind, i) => <IndRow key={i} ind={ind} />)}
           {children}
         </div>
@@ -283,7 +418,12 @@ function ExternalTab({ c }: { c: Counterparty }) {
           та же карточка. Расшифровка внутри — таблицей, без клика и модалки. */}
       {ext.sections.map((s) => (
         <Fragment key={s.key}>
-          <ExtAccordion title={s.title} indicators={s.indicators} defaultOpen={['s1', 's2', 's4', 's6'].includes(s.key)}>
+          <ExtAccordion
+            title={s.title}
+            indicators={s.indicators}
+            defaultOpen={['s1', 's2', 's4', 's6'].includes(s.key)}
+            beforeIndicators={s.key === 's1' && s.indicators ? <RiskSummaryBar indicators={s.indicators} /> : undefined}
+          >
             {s.key === 's6' && ext.courtCases.length > 0 && (
               <div style={{ marginTop: 10 }}>
                 <div style={{ fontWeight: 600, fontSize: 12.5, marginBottom: 6 }}>Расшифровка судебных дел</div>
