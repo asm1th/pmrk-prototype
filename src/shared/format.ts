@@ -3,10 +3,10 @@
 const RUB = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
 const RUB2 = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-export function money(amount: number, opts?: { unit?: 'руб.' | 'тыс. руб.' | 'млн руб.'; frac?: boolean }): string {
+export function money(amount: number, opts?: { unit?: 'руб.' | 'тыс. руб.' | 'млн руб.' | ''; frac?: boolean }): string {
   const unit = opts?.unit ?? 'руб.';
   const fmt = opts?.frac ? RUB2 : RUB;
-  return `${fmt.format(amount)} ${unit}`;
+  return unit ? `${fmt.format(amount)} ${unit}` : fmt.format(amount);
 }
 
 /** Компактная подача больших сумм для плотных таблиц/карточек. */
