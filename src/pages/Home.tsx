@@ -107,7 +107,7 @@ function CompanyRow({ c, simple, onClick, hideBadge }: { c: Counterparty; simple
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 15, fontWeight: 600 }} className="pmrk-truncate">{c.name}</div>
-        <div className="pmrk-muted" style={{ fontSize: 12.5, marginTop: 2 }}>ИНН {c.inn} · {c.region}</div>
+        <div className="pmrk-muted pmrk-truncate" style={{ fontSize: 12.5, marginTop: 2 }}>ИНН {c.inn} · {c.region}</div>
       </div>
       {!hideBadge && (simple ? <VerdictPill tone={v.tone} label={v.label} /> : <GroupBadge group={c.group} withScore={c.score} />)}
       <IconForward size="s" className="pmrk-muted" />
@@ -209,7 +209,7 @@ export function Home() {
 
       {/* Поиск ещё не начат — недавние контрагенты, действия и дашборды в один ряд */}
       {!searched && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(340px, 1.1fr) minmax(430px, 1.3fr) minmax(280px, 0.9fr)', gap: 16, alignItems: 'stretch' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(355px, 0.95fr) minmax(430px, 1.45fr) minmax(280px, 0.9fr)', gap: 16, alignItems: 'stretch' }}>
           <SectionCard title="Недавние контрагенты" style={{ display: 'flex', flexDirection: 'column' }}>
             <div className="pmrk-stack" style={{ gap: 8 }}>
               {FAVORITES.map((uid) => {
