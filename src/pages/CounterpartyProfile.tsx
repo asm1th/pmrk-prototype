@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@consta/uikit/Button';
 import { Modal } from '@consta/uikit/Modal';
@@ -24,7 +24,7 @@ import { AffiliationDiagram, type DiagramFilters } from '@/shared/ui/Affiliation
 import { BY_UID, GRAPHS, groupLabel, NOW } from '@/shared/mock/data';
 import { AI_SUMMARY, AI_GROUP_RISK, SCORE_EXPLAIN } from '@/shared/mock/ai';
 import { useMockQuery } from '@/shared/mock/useMockQuery';
-import { buildExternal, rbSignal, type SanctionDetail, type Indicator } from '@/shared/mock/external';
+import { buildExternal, rbSignal, type Indicator } from '@/shared/mock/external';
 import { buildLegal } from '@/shared/mock/legal';
 import type { Counterparty, AffiliationLinkType } from '@/shared/mock/types';
 import { dateRu, money, moneyCompact, pct, inn as fmtInn } from '@/shared/format';
@@ -262,7 +262,6 @@ function ExtAccordion({ title, indicators, defaultOpen, children }: { title: str
 
 function ExternalTab({ c }: { c: Counterparty }) {
   const ext = useMemo(() => buildExternal(c), [c.uid]);
-  const [card, setCard] = useState<SanctionDetail | null>(null);
   const [allCases, setAllCases] = useState(false);
   const rb = rbSignal(c.rbIndex);
 
@@ -277,72 +276,73 @@ function ExternalTab({ c }: { c: Counterparty }) {
         </div>
       </SectionCard>
 
-      {/* 3. Санкции — раздел скрыт при отсутствии записей (ФТ-1.3) */}
-      {ext.sanctions.length > 0 && (
-        <SectionCard title="3. Санкции по данным СПАРК" extra={<DateActuality date={c.asOf.external} source="X-Compliance" />}>
-          <div style={{ marginBottom: 10 }}><span className="pmrk-muted" style={{ fontSize: 13 }}>Под санкциями: </span><b style={{ color: 'var(--pmrk-risk-4)' }}>Да</b></div>
-          <div className="pmrk-muted" style={{ fontSize: 12, marginBottom: 8 }}>Расшифровка санкций — клик по строке открывает карточку.</div>
-          {ext.sanctions.map((s, i) => (
-            <div key={i} className="pmrk-tr" style={{ padding: '10px 4px' }} onClick={() => setCard(s)}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{s.program}</div>
-                <div className="pmrk-muted" style={{ fontSize: 11.5 }}>{s.category} · {s.type} · с {dateRu(s.from)}</div>
-              </div>
-              <span className="pmrk-muted">→</span>
-            </div>
-          ))}
-        </SectionCard>
-      )}
-
-      {/* 1,2,4,5,6,7,9,10,11 — аккордеоны (прогрессивное раскрытие) */}
+      {/* 1,2,4,5,6,7,9,10,11 — аккордеоны (прогрессивное раскрытие).
+          3. Санкции по данным СПАРК встроена в ту же последовательность сразу после
+          раздела 2 (по номеру), тем же компонентом ExtAccordion — раздел не должен
+          визуально отличаться от остальных: тот же сворачиваемый заголовок,
+          та же карточка. Расшифровка внутри — таблицей, без клика и модалки. */}
       {ext.sections.map((s) => (
-        <ExtAccordion key={s.key} title={s.title} indicators={s.indicators} defaultOpen={['s1', 's2', 's4', 's6'].includes(s.key)}>
-          {s.key === 's6' && ext.courtCases.length > 0 && (
-            <div style={{ marginTop: 10 }}>
-              <div style={{ fontWeight: 600, fontSize: 12.5, marginBottom: 6 }}>Расшифровка судебных дел</div>
-              <div className="pmrk-table">
-                <div className="pmrk-table__head">
-                  <div className="pmrk-th" style={{ flex: 1.6 }}>Истец</div>
-                  <div className="pmrk-th" style={{ flex: 1.2 }}>Номер дела</div>
-                  <div className="pmrk-th" style={{ flex: 1 }}>Состояние</div>
-                  <div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Сумма иска</div>
-                </div>
-                {(allCases ? ext.courtCases : ext.courtCases.slice(0, 3)).map((cc, i) => (
-                  <div key={i} className="pmrk-tr" style={{ cursor: 'default' }}>
-                    <div className="pmrk-td" style={{ flex: 1.6 }}>{cc.plaintiff}</div>
-                    <div className="pmrk-td" style={{ flex: 1.2 }}>{cc.number}</div>
-                    <div className="pmrk-td" style={{ flex: 1 }}>{cc.state}</div>
-                    <div className="pmrk-td pmrk-tnum" style={{ flex: 1, justifyContent: 'flex-end', display: 'flex' }}>{moneyCompact(cc.claim)}</div>
+        <Fragment key={s.key}>
+          <ExtAccordion title={s.title} indicators={s.indicators} defaultOpen={['s1', 's2', 's4', 's6'].includes(s.key)}>
+            {s.key === 's6' && ext.courtCases.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ fontWeight: 600, fontSize: 12.5, marginBottom: 6 }}>Расшифровка судебных дел</div>
+                <div className="pmrk-table">
+                  <div className="pmrk-table__head">
+                    <div className="pmrk-th" style={{ flex: 1.6 }}>Истец</div>
+                    <div className="pmrk-th" style={{ flex: 1.2 }}>Номер дела</div>
+                    <div className="pmrk-th" style={{ flex: 1 }}>Состояние</div>
+                    <div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Сумма иска</div>
                   </div>
-                ))}
+                  {(allCases ? ext.courtCases : ext.courtCases.slice(0, 3)).map((cc, i) => (
+                    <div key={i} className="pmrk-tr" style={{ cursor: 'default' }}>
+                      <div className="pmrk-td" style={{ flex: 1.6 }}>{cc.plaintiff}</div>
+                      <div className="pmrk-td" style={{ flex: 1.2 }}>{cc.number}</div>
+                      <div className="pmrk-td" style={{ flex: 1 }}>{cc.state}</div>
+                      <div className="pmrk-td pmrk-tnum" style={{ flex: 1, justifyContent: 'flex-end', display: 'flex' }}>{moneyCompact(cc.claim)}</div>
+                    </div>
+                  ))}
+                </div>
+                {ext.courtCases.length > 3 && <div style={{ marginTop: 6 }}><Button size="xs" view="ghost" label={allCases ? 'Свернуть' : 'Показать больше'} onClick={() => setAllCases((v) => !v)} /></div>}
               </div>
-              {ext.courtCases.length > 3 && <div style={{ marginTop: 6 }}><Button size="xs" view="ghost" label={allCases ? 'Свернуть' : 'Показать больше'} onClick={() => setAllCases((v) => !v)} /></div>}
-            </div>
-          )}
-        </ExtAccordion>
-      ))}
+            )}
+          </ExtAccordion>
 
-      {/* Карточка санкции */}
-      <Modal isOpen={!!card} onClickOutside={() => setCard(null)} onEsc={() => setCard(null)}>
-        {card && (
-          <div style={{ padding: 20, width: 480, maxWidth: '92vw' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h3 style={{ margin: 0, fontSize: 16 }}>Карточка санкции</h3>
-              <Button size="xs" view="clear" label="✕" onClick={() => setCard(null)} />
-            </div>
-            <KeyValue cols={1} items={[
-              { k: 'Категория ограничительных мер', v: card.category },
-              { k: 'Санкционный список', v: card.list },
-              { k: 'Санкционная программа', v: card.program },
-              { k: 'Причина включения', v: card.reason },
-              { k: 'Дата включения', v: dateRu(card.from) },
-              { k: 'Дата исключения', v: card.to },
-              { k: 'Тип санкций', v: card.type },
-              { k: 'Совладельцы', v: card.coOwners },
-            ]} />
-          </div>
-        )}
-      </Modal>
+          {/* 3. Санкции — сразу после раздела 2 (по номеру), скрыт при отсутствии записей (ФТ-1.3) */}
+          {s.key === 's2' && ext.sanctions.length > 0 && (
+            <ExtAccordion
+              title="3. Санкции по данным СПАРК"
+              indicators={[{ label: 'Под санкциями', value: 'Да', level: 'high' }]}
+              defaultOpen
+            >
+              <div style={{ marginTop: 10 }}>
+                <div className="pmrk-table">
+                  <div className="pmrk-table__head">
+                    <div className="pmrk-th" style={{ flex: 1.5 }}>Санкционная программа / список</div>
+                    <div className="pmrk-th" style={{ flex: 1 }}>Категория</div>
+                    <div className="pmrk-th" style={{ flex: 1.1 }}>Тип санкций</div>
+                    <div className="pmrk-th" style={{ flex: 0.8 }}>Включение</div>
+                    <div className="pmrk-th" style={{ flex: 0.8 }}>Исключение</div>
+                    <div className="pmrk-th" style={{ flex: 0.8 }}>Совладельцы</div>
+                    <div className="pmrk-th" style={{ flex: 1.8 }}>Причина включения</div>
+                  </div>
+                  {ext.sanctions.map((sd, i) => (
+                    <div key={i} className="pmrk-tr" style={{ cursor: 'default', alignItems: 'flex-start' }}>
+                      <div className="pmrk-td" style={{ flex: 1.5, fontWeight: 600, whiteSpace: 'normal' }}>{sd.program}</div>
+                      <div className="pmrk-td" style={{ flex: 1, whiteSpace: 'normal' }}>{sd.category}</div>
+                      <div className="pmrk-td" style={{ flex: 1.1, whiteSpace: 'normal' }}>{sd.type}</div>
+                      <div className="pmrk-td" style={{ flex: 0.8 }}>{dateRu(sd.from)}</div>
+                      <div className="pmrk-td" style={{ flex: 0.8 }}>{sd.to}</div>
+                      <div className="pmrk-td" style={{ flex: 0.8 }}>{sd.coOwners}</div>
+                      <div className="pmrk-td" style={{ flex: 1.8, whiteSpace: 'normal' }}>{sd.reason}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </ExtAccordion>
+          )}
+        </Fragment>
+      ))}
     </>
   );
 }
@@ -527,7 +527,7 @@ function StatementsTab({ c }: { c: Counterparty }) {
         {[['Внеоборотные активы', 0.3], ['Оборотные активы', 0.7], ['БАЛАНС (актив)', 1], ['Капитал и резервы', 0.35], ['Долгосрочные обязательства', 0.2], ['Краткосрочные обязательства', 0.45], ['БАЛАНС (пассив)', 1]].map(([label, k]) => (
           <div key={label as string} className="pmrk-tr" style={{ cursor: 'default', fontWeight: (label as string).includes('БАЛАНС') ? 700 : 400 }}>
             <div className="pmrk-td" style={{ flex: 2 }}>{label}</div>
-            {[0.9, 0.96, 1].map((y, i) => <div key={i} className="pmrk-td pmrk-tnum" style={{ flex: 1, justifyContent: 'flex-end', display: 'flex' }}>{money(Math.round((c.revenue * 0.4 * (k as number)) * y / 1000), { unit: 'тыс. руб.' })}</div>)}
+            {[0.9, 0.96, 1].map((y, i) => <div key={i} className="pmrk-td pmrk-tnum" style={{ flex: 1, justifyContent: 'flex-end', display: 'flex' }}>{money(Math.round((c.revenue * 0.4 * (k as number)) * y / 1000), { unit: '' })}</div>)}
           </div>
         ))}
       </div>
