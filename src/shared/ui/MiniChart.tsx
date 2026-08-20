@@ -154,29 +154,47 @@ export function Bar({ value, max, color }: { value: number; max: number; color: 
 
 /** Кольцевой прогресс — использование лимита и т.п. */
 export function Gauge({ value, color, label }: { value: number; color: string; label?: string }) {
-  const r = 26;
+  // Крупнее и с более толстым кольцом, чем раньше (было 64px/6px) — на прежнем
+  // размере процент и сам прогресс читались мелко; так кольцо и число заметнее,
+  // не теряются рядом с крупными цифрами соседних Stat.
+  const size = 92;
+  const strokeWidth = 9;
+  const r = (size - strokeWidth) / 2;
+  const cx = size / 2;
   const c = 2 * Math.PI * r;
   return (
-    <div style={{ position: 'relative', width: 64, height: 64 }}>
-      <svg width={64} height={64}>
-        <circle cx={32} cy={32} r={r} fill="none" stroke="var(--color-bg-secondary)" strokeWidth={6} />
-        <circle
-          cx={32}
-          cy={32}
-          r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth={6}
-          strokeDasharray={c}
-          strokeDashoffset={c * (1 - value)}
-          strokeLinecap="round"
-          transform="rotate(-90 32 32)"
-        />
-      </svg>
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>
-        {Math.round(value * 100)}%
+    // Обёртка без фиксированной высоты — иначе длинная подпись (2+ строки) вылезала
+    // бы за пределы круга и наслаивалась на то, что идёт после Gauge. Круг с
+    // процентом внутри держит фиксированный размер отдельным вложенным блоком.
+    <div style={{ width: size }}>
+      <div style={{ position: 'relative', width: size, height: size }}>
+        <svg width={size} height={size}>
+          <circle cx={cx} cy={cx} r={r} fill="none" stroke="var(--color-bg-border)" strokeWidth={strokeWidth} />
+          <circle
+            cx={cx}
+            cy={cx}
+            r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeDasharray={c}
+            strokeDashoffset={c * (1 - value)}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${cx} ${cx})`}
+          />
+        </svg>
+        {/* Число выделено размером, «%» — мельче рядом, тот же приём, что и у
+            сумм соседних Stat (MoneyValue в CreditLimitTab): крупная цифра —
+            смысловой центр показателя, единица измерения — вспомогательная. */}
+        {/* alignItems: 'center' (не 'baseline') — число и «%» центрируются как
+            единый блок относительно центра кольца, а не по базовой линии текста,
+            которая при разных кеглях смещала визуальный центр вверх. */}
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontVariantNumeric: 'tabular-nums' }}>
+          <span style={{ fontSize: 28, fontWeight: 800 }}>{Math.round(value * 100)}</span>
+          <span style={{ fontSize: 15, fontWeight: 600, marginLeft: 1, color: 'var(--color-typo-secondary)' }}>%</span>
+        </div>
       </div>
-      {label && <div className="pmrk-muted" style={{ textAlign: 'center', fontSize: 11 }}>{label}</div>}
+      {label && <div className="pmrk-muted" style={{ textAlign: 'center', fontSize: 11, marginTop: 4 }}>{label}</div>}
     </div>
   );
 }

@@ -11,11 +11,19 @@ export function money(amount: number, opts?: { unit?: 'руб.' | 'тыс. ру�
 
 /** Компактная подача больших сумм для плотных таблиц/карточек. */
 export function moneyCompact(amount: number): string {
+  const { value, unit } = moneyCompactParts(amount);
+  return `${value} ${unit}`;
+}
+
+/** То же самое, но число и единица измерения отдельно — чтобы можно было
+    визуально выделить размером именно число, а не всю строку целиком
+    (крупная цифра, мельче — «млрд ₽» рядом). */
+export function moneyCompactParts(amount: number): { value: string; unit: string } {
   const abs = Math.abs(amount);
-  if (abs >= 1_000_000_000) return `${RUB2.format(amount / 1_000_000_000)} млрд ₽`;
-  if (abs >= 1_000_000) return `${RUB2.format(amount / 1_000_000)} млн ₽`;
-  if (abs >= 1_000) return `${RUB.format(Math.round(amount / 1_000))} тыс. ₽`;
-  return `${RUB.format(amount)} ₽`;
+  if (abs >= 1_000_000_000) return { value: RUB2.format(amount / 1_000_000_000), unit: 'млрд ₽' };
+  if (abs >= 1_000_000) return { value: RUB2.format(amount / 1_000_000), unit: 'млн ₽' };
+  if (abs >= 1_000) return { value: RUB.format(Math.round(amount / 1_000)), unit: 'тыс. ₽' };
+  return { value: RUB.format(amount), unit: '₽' };
 }
 
 export function pct(value: number, frac = 1): string {

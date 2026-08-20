@@ -26,8 +26,9 @@ import { AI_SUMMARY, AI_GROUP_RISK, SCORE_EXPLAIN } from '@/shared/mock/ai';
 import { useMockQuery } from '@/shared/mock/useMockQuery';
 import { buildExternal, rbSignal, type Indicator } from '@/shared/mock/external';
 import { buildLegal } from '@/shared/mock/legal';
+import { buildCreditLimitsByDo, isDoLimitActive, activeCreditLimit } from '@/shared/mock/creditLimits';
 import type { Counterparty, AffiliationLinkType } from '@/shared/mock/types';
-import { dateRu, money, moneyCompact, pct, inn as fmtInn } from '@/shared/format';
+import { dateRu, money, moneyCompact, moneyCompactParts, pct, inn as fmtInn } from '@/shared/format';
 
 interface TabDef { key: string; label: string; cap?: Parameters<typeof can>[1]; }
 const TABS: TabDef[] = [
@@ -897,21 +898,98 @@ function LegalTab({ c }: { c: Counterparty }) {
   );
 }
 
-function CreditLimitTab({ c }: { c: Counterparty }) {
+/** Крупная цифра + мельче единица измерения рядом — числовое значение выделено
+    размером, а не вся строка целиком («млрд ₽» остаётся вспомогательным текстом). */
+function MoneyValue({ amount }: { amount: number }) {
+  if (!amount) return <>—</>;
+  const { value, unit } = moneyCompactParts(amount);
   return (
-    <SectionCard title="Кредитный лимит" extra={<DateActuality date={c.asOf['credit-limit']} source="limit-workflow" />}>
-      <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ textAlign: 'center' }}>
-          <Gauge value={c.limitUtilization} color={c.limitUtilization > 0.85 ? 'var(--pmrk-risk-4)' : c.limitUtilization > 0.6 ? 'var(--pmrk-risk-3)' : 'var(--pmrk-risk-1)'} label="использование" />
-          <div style={{ marginTop: 4 }}><CalcStamp date={c.asOf['credit-limit']} source="АРМ КК" /></div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,auto)', gap: '8px 28px' }}>
-          <Stat label="Действующий КЛ" value={c.creditLimit ? moneyCompact(c.creditLimit) : '—'} asOf={c.asOf['credit-limit']} calcLabel="обновлено" calcSource="limit-workflow" />
-          <Stat label="Совокупный КЛ группы" value={c.groupAggregateLimit ? moneyCompact(c.groupAggregateLimit) : '—'} asOf={c.asOf['credit-limit']} calcSource="агрегат группы" />
-          <Stat label="Отсрочка платежа" value="45 дней" />
+    <>
+      {/* Кегль цифры +50% к прежнему (28 → 42) по прямому запросу; единица
+          измерения увеличена пропорционально, чтобы соотношение сохранилось. */}
+      <span style={{ fontSize: 42, fontWeight: 800 }}>{value}</span>
+      <span style={{ fontSize: 21, fontWeight: 600, marginLeft: 6, color: 'var(--color-typo-secondary)' }}>{unit}</span>
+    </>
+  );
+}
+
+function CreditLimitTab({ c }: { c: Counterparty }) {
+  const doLimits = useMemo(() => buildCreditLimitsByDo(c), [c.uid]);
+  // Совокупный КЛ группы — не отдельный агрегат, а сумма поля «Лимит» из таблицы
+  // «Утверждённые кредитные лимиты аффилированных лиц» ниже: значение и расчёт
+  // всегда согласованы по построению, а не «случайно совпадают».
+  const groupAggregateLimit = useMemo(() => doLimits.reduce((sum, row) => sum + row.amountRub, 0), [doLimits]);
+  // Действующий КЛ — тоже из этой таблицы, но только по лимитам с непросроченным
+  // сроком действия (Действительность = Да): сколько группа реально может выбрать
+  // прямо сейчас, в отличие от совокупного КЛ — общей утверждённой ёмкости.
+  const activeLimit = useMemo(() => activeCreditLimit(doLimits), [doLimits]);
+  // % использования — доля действующего КЛ от совокупного КЛ группы, а не отдельный
+  // мок-показатель: те же два числа выше, просто как отношение.
+  const utilizationPct = groupAggregateLimit > 0 ? (activeLimit / groupAggregateLimit) * 100 : 0;
+  return (
+    <SectionCard title="Утверждённые совокупные кредитные лимиты по ГК Газпром-нефть" extra={<DateActuality date={c.asOf['credit-limit']} source="limit-workflow" />}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,auto)', gap: '8px 28px', alignItems: 'stretch' }}>
+        {/* Числовое значение выделено размером через MoneyValue (крупная цифра +
+            мельче единица) — .pmrk-stat__value центрирует его по вертикали между
+            подписью и сноской даты (эффект виден только при растянутой карточке). */}
+        <Stat label="Действующий КЛ" value={<MoneyValue amount={activeLimit} />} asOf={c.asOf['credit-limit']} calcLabel="обновлено" calcSource="сумма непросроченных по таблице" />
+        <Stat label="Совокупный КЛ группы" value={<MoneyValue amount={groupAggregateLimit} />} asOf={c.asOf['credit-limit']} calcSource="сумма по таблице ниже" />
+        {/* Та же обводка и расположение заголовка, что у Stat («Действующий КЛ»
+            и т.д.) — подпись сверху, содержимое (пончик) центрировано между ней
+            и сноской, как и в двух карточках рядом. */}
+        <div className="pmrk-stat">
+          <div className="pmrk-stat__label">% использования</div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+            <Gauge value={utilizationPct / 100} color={utilizationPct > 85 ? 'var(--pmrk-risk-4)' : utilizationPct > 60 ? 'var(--pmrk-risk-3)' : 'var(--pmrk-risk-1)'} />
+          </div>
+          <div className="pmrk-stat__stamp"><CalcStamp date={c.asOf['credit-limit']} source="действующий КЛ / совокупный КЛ" /></div>
         </div>
       </div>
-      {c.limitUtilization > 0.85 && <div style={{ marginTop: 12, fontSize: 13, color: 'var(--pmrk-risk-4)' }}>⚠ Лимит выбран более чем на 85% — запас исчерпан, рекомендуется пересмотр.</div>}
+      {utilizationPct > 85 && <div style={{ marginTop: 12, fontSize: 13, color: 'var(--pmrk-risk-4)' }}>⚠ Лимит выбран более чем на 85% — запас исчерпан, рекомендуется пересмотр.</div>}
+
+      {/* Распределение совокупного КЛ по ДО ГК ГПН, работающим с контрагентом
+          (реестр «Кредитные лимиты», ФТ-1.7) — раскладка тех же агрегатов выше. */}
+      <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--color-bg-border)' }}>
+        <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 10 }}>Утверждённые кредитные лимиты аффилированных лиц по ГК Газпром-нефть</div>
+        {doLimits.length === 0 ? (
+          <EmptyState text="Действующих лимитов по ДО нет — заявка на открытие КЛ не подавалась или отклонена." />
+        ) : (
+          <div className="pmrk-table">
+            <div className="pmrk-table__head">
+              <div className="pmrk-th" style={{ flex: 1.5 }}>Название</div>
+              <div className="pmrk-th" style={{ flex: 0.9 }}>ИНН</div>
+              <div className="pmrk-th" style={{ flex: 1.2 }}>Сегмент</div>
+              <div className="pmrk-th" style={{ flex: 0.9, justifyContent: 'flex-end' }}>Лимит</div>
+              <div className="pmrk-th" style={{ flex: 0.7, justifyContent: 'flex-end' }}>Отсрочка</div>
+              <div className="pmrk-th" style={{ flex: 1.1 }}>Коллегиальный орган</div>
+              <div className="pmrk-th" style={{ flex: 1 }}>Реквизиты документа</div>
+              <div className="pmrk-th" style={{ flex: 1.1 }}>Действительность</div>
+              <div className="pmrk-th" style={{ flex: 0.9 }}>Обеспечение</div>
+              <div className="pmrk-th" style={{ flex: 1 }}>Комментарии по обеспечению</div>
+            </div>
+            {doLimits.map((row, i) => {
+              const active = isDoLimitActive(row);
+              return (
+                <div key={i} className="pmrk-tr" style={{ cursor: 'default', alignItems: 'flex-start' }}>
+                  <div className="pmrk-td" style={{ flex: 1.5, fontWeight: 600, whiteSpace: 'normal' }}>{row.subsidiary}</div>
+                  <div className="pmrk-td pmrk-tnum" style={{ flex: 0.9 }}>{row.subsidiaryInn}</div>
+                  <div className="pmrk-td" style={{ flex: 1.2, whiteSpace: 'normal' }}>{row.segment}</div>
+                  <div className="pmrk-td pmrk-tnum" style={{ flex: 0.9, justifyContent: 'flex-end', display: 'flex' }}>{moneyCompact(row.amountRub)}</div>
+                  <div className="pmrk-td pmrk-tnum" style={{ flex: 0.7, justifyContent: 'flex-end', display: 'flex' }}>{row.deferralDays} дн.</div>
+                  <div className="pmrk-td" style={{ flex: 1.1, whiteSpace: 'normal' }}>{row.approvalBody}</div>
+                  <div className="pmrk-td" style={{ flex: 1, whiteSpace: 'normal', overflowWrap: 'anywhere' }}>{row.documentRef}</div>
+                  <div className="pmrk-td" style={{ flex: 1.1, whiteSpace: 'normal' }}>
+                    <span style={{ color: active ? 'var(--pmrk-risk-1)' : 'var(--pmrk-risk-4)', fontWeight: 600, fontSize: 12 }}>{active ? 'Да' : 'Нет'}</span>
+                    <div className="pmrk-muted" style={{ fontSize: 11.5, marginTop: 2 }}>{dateRu(row.startDate)} – {dateRu(row.endDate)}</div>
+                  </div>
+                  <div className="pmrk-td pmrk-muted" style={{ flex: 0.9, whiteSpace: 'normal' }}>{row.collateral}</div>
+                  <div className="pmrk-td pmrk-muted" style={{ flex: 1, whiteSpace: 'normal' }}>—</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </SectionCard>
   );
 }
