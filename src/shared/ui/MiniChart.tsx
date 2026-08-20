@@ -16,6 +16,8 @@ export function LineChart(props: {
   labels: string[];
   height?: number;
   format?: (n: number) => string;
+  /** Точки на каждое значение серии, не только при наведении (ФТ — «Данные по ДЗ и КЗ»). */
+  showPoints?: boolean;
 }) {
   const H = props.height ?? 160;
   const W = 640;
@@ -62,6 +64,9 @@ export function LineChart(props: {
             <g key={si}>
               {s.area && <path d={area} fill={s.color} opacity={0.1} />}
               <path d={d} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+              {props.showPoints && s.points.map((v, i) => (
+                <circle key={i} cx={x(i)} cy={y(v)} r={4} fill={s.color} stroke="var(--color-bg-default)" strokeWidth={1.5} />
+              ))}
             </g>
           );
         })}
@@ -70,7 +75,7 @@ export function LineChart(props: {
           <g>
             <line x1={x(hover)} x2={x(hover)} y1={padT} y2={padT + innerH} stroke="var(--color-typo-ghost)" strokeDasharray="3 3" />
             {props.series.map((s, si) => (
-              <circle key={si} cx={x(hover)} cy={y(s.points[hover])} r={3.5} fill={s.color} stroke="var(--color-bg-default)" strokeWidth={1.5} />
+              <circle key={si} cx={x(hover)} cy={y(s.points[hover])} r={5.5} fill={s.color} stroke="var(--color-bg-default)" strokeWidth={1.5} />
             ))}
           </g>
         )}

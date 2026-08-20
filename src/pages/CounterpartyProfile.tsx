@@ -193,6 +193,33 @@ function TabContent({ c, tab }: { c: Counterparty; tab: string }) {
 }
 
 function GeneralTab({ c }: { c: Counterparty }) {
+  // Список ДО — та же выборка, что и в «Кредитном лимите» (buildCreditLimitsByDo),
+  // здесь просто показывает состав, без цифр лимита. На карточке нет отдельного
+  // справочника ДО, поэтому переиспользуем уже посчитанную связь контрагент↔ДО.
+  const doLimits = useMemo(() => buildCreditLimitsByDo(c), [c.uid]);
+  const doList = useMemo(() => {
+    const seen = new Map<string, (typeof doLimits)[number]>();
+    doLimits.forEach((row) => { if (!seen.has(row.subsidiary)) seen.set(row.subsidiary, row); });
+    return [...seen.values()];
+  }, [doLimits]);
+  const [doDetail, setDoDetail] = useState<{ title: string; items: { k: string; v: React.ReactNode }[] } | null>(null);
+
+  const openDo = (row: (typeof doLimits)[number]) => setDoDetail({
+    title: row.subsidiary,
+    items: [
+      { k: 'Наименование ДО', v: row.subsidiary },
+      { k: 'ИНН', v: row.subsidiaryInn },
+      { k: 'Сегмент', v: row.segment },
+      { k: 'Лимит', v: moneyCompact(row.amountRub) },
+      { k: 'Отсрочка платежа', v: `${row.deferralDays} дн.` },
+      { k: 'Коллегиальный орган', v: row.approvalBody },
+      { k: 'Реквизиты документа', v: row.documentRef },
+      { k: 'Действительность', v: isDoLimitActive(row) ? 'Да' : 'Нет' },
+      { k: 'Действует', v: `${dateRu(row.startDate)} – ${dateRu(row.endDate)}` },
+      { k: 'Обеспечение', v: row.collateral },
+    ],
+  });
+
   return (
     <>
       <SectionCard title="Общие сведения" extra={<DateActuality date={c.asOf.general} source="СПАРК / ЕГРЮЛ" />}>
@@ -207,19 +234,45 @@ function GeneralTab({ c }: { c: Counterparty }) {
             { k: 'Дата регистрации', v: dateRu(c.registered) },
             { k: 'Выручка (последний год)', v: moneyCompact(c.revenue) },
             { k: 'Численность', v: `${c.employees} чел.` },
-            { k: 'Работает с ДО', v: c.subsidiary },
           ]}
         />
+
+        {doList.length > 0 && (
+          <>
+            <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--color-bg-border)', fontWeight: 600, fontSize: 13.5, marginBottom: 10 }}>Работает с ДО</div>
+            <div className="pmrk-stack" style={{ gap: 8 }}>
+              {doList.map((row, i) => (
+                <button
+                  key={i}
+                  onClick={() => openDo(row)}
+                  className="pmrk-clickable"
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', padding: '12px 14px', border: '1px solid var(--color-bg-border)', borderRadius: 12, background: 'var(--color-bg-default)', cursor: 'pointer' }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600 }} className="pmrk-truncate">{row.subsidiary}</div>
+                    <div className="pmrk-muted" style={{ fontSize: 12, marginTop: 2 }}>ИНН {row.subsidiaryInn}</div>
+                  </div>
+                  <span className="pmrk-muted">→</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </SectionCard>
-      <SectionCard title="Прогноз вероятности дефолта (PD)" extra={<DateActuality date={c.asOf.general} source="АГАТА" />}>
-        {c.pdForecast.length ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
-            {c.pdForecast.map((p) => (
-              <Stat key={p.horizon} label={`PD ${p.horizon}`} value={pct(p.pd)} tone={p.pd > 15 ? 'risk' : p.pd > 5 ? 'default' : 'good'} asOf={c.asOf.general} calcSource="модель АГАТА" />
-            ))}
+
+      {/* Доп. информация по ДО — тот же паттерн, что и карточки претензий/дел
+          в «Претензионно-исковой работе»: клик по строке → Modal с KeyValue. */}
+      <Modal isOpen={!!doDetail} onClickOutside={() => setDoDetail(null)} onEsc={() => setDoDetail(null)}>
+        {doDetail && (
+          <div style={{ padding: 20, width: 480, maxWidth: '92vw' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontSize: 16 }}>{doDetail.title}</h3>
+              <Button size="xs" view="clear" label="✕" onClick={() => setDoDetail(null)} />
+            </div>
+            <KeyValue cols={1} items={doDetail.items} />
           </div>
-        ) : <EmptyState text="Прогноз PD рассчитывается по данным АГАТА." />}
-      </SectionCard>
+        )}
+      </Modal>
     </>
   );
 }
@@ -361,7 +414,10 @@ const SHORT_LABEL: Record<string, string> = {
     самостоятельный блок в границах того же раздела. */
 function RiskSummaryBar({ indicators }: { indicators: Indicator[] }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-around', gap: 12, padding: '4px 4px 20px', marginBottom: 16, borderBottom: '1px solid var(--color-bg-border)' }}>
+    // Группа занимает ровно половину ширины раздела (width: '50%'), показатели
+    // распределены по этой половине через justifyContent: 'space-between' —
+    // расстояние между ними задаётся шириной группы, а не фиксированным gap.
+    <div style={{ display: 'flex', justifyContent: 'space-between', width: '50%', padding: '4px 4px 20px', marginBottom: 16, borderBottom: '1px solid var(--color-bg-border)' }}>
       {indicators.map((ind, i) => (
         <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-typo-secondary)' }}>
@@ -587,12 +643,18 @@ function DebtTab({ c }: { c: Counterparty }) {
   return (
     <>
       <SectionCard title="Данные по дебиторской и кредиторской задолженности" extra={<DateActuality date={c.asOf.debt} source="АРМ КК" />}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {/* Три графика друг за другом в ряд (было 2: «Авансы и кредиторская
+            задолженность» объединяла две разнородные серии в одном графике —
+            разделили на «Авансовую» и «Кредитную» задолженность). Точки на
+            каждое значение — showPoints; значение по-прежнему только по
+            наведению (тултип), как и раньше. */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           <div>
             <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6 }}>ДЗ и ПДЗ</div>
             <LineChart
               labels={labels}
               format={(v) => moneyCompact(v)}
+              showPoints
               series={[
                 { name: 'Дебиторская задолженность', color: 'var(--color-bg-brand)', points: debt.map((d) => d.dz), area: true },
                 { name: 'Просроченная ДЗ', color: 'var(--pmrk-risk-4)', points: debt.map((d) => d.pdz) },
@@ -600,13 +662,24 @@ function DebtTab({ c }: { c: Counterparty }) {
             />
           </div>
           <div>
-            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6 }}>Авансы и кредиторская задолженность</div>
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6 }}>Авансовая задолженность</div>
             <LineChart
               labels={labels}
               format={(v) => moneyCompact(v)}
+              showPoints
               series={[
-                { name: 'Выданные авансы', color: 'var(--pmrk-risk-2)', points: debt.map((d) => d.advance) },
-                { name: 'Кредиторская задолженность', color: 'var(--pmrk-ai)', points: debt.map((d) => d.payable) },
+                { name: 'Выданные авансы', color: 'var(--pmrk-risk-2)', points: debt.map((d) => d.advance), area: true },
+              ]}
+            />
+          </div>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6 }}>Кредитная задолженность</div>
+            <LineChart
+              labels={labels}
+              format={(v) => moneyCompact(v)}
+              showPoints
+              series={[
+                { name: 'Кредиторская задолженность', color: 'var(--pmrk-ai)', points: debt.map((d) => d.payable), area: true },
               ]}
             />
           </div>
@@ -615,20 +688,20 @@ function DebtTab({ c }: { c: Counterparty }) {
       <SectionCard title="Детализация (Блок → ДО → итог, 13 аналитик)">
         <div className="pmrk-table">
           <div className="pmrk-table__head">
-            <div className="pmrk-th" style={{ flex: 2 }}>Уровень</div>
-            <div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>ДЗ</div>
-            <div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>ПДЗ</div>
-            <div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Авансы</div>
+            <div className="pmrk-th" style={{ flex: 2.8 }}>Уровень</div>
+            <div className="pmrk-th" style={{ flex: 0.6, justifyContent: 'flex-end' }}>ДЗ</div>
+            <div className="pmrk-th" style={{ flex: 0.6, justifyContent: 'flex-end' }}>ПДЗ</div>
+            <div className="pmrk-th" style={{ flex: 0.6, justifyContent: 'flex-end' }}>Авансы</div>
           </div>
           {[
             { lvl: 'Блок (совокупно)', dz: debt[debt.length - 1].dz, pdz: debt[debt.length - 1].pdz, adv: debt[debt.length - 1].advance },
             { lvl: c.subsidiary.replace('ООО «', '').replace('»', ''), dz: Math.round(debt[debt.length - 1].dz * 0.7), pdz: Math.round(debt[debt.length - 1].pdz * 0.7), adv: Math.round(debt[debt.length - 1].advance * 0.6) },
           ].map((r, i) => (
             <div key={i} className="pmrk-tr pmrk-clickable" onClick={() => setDetail(r.lvl)}>
-              <div className="pmrk-td" style={{ flex: 2, fontWeight: i === 0 ? 700 : 400 }}>{r.lvl}</div>
-              <div className="pmrk-td pmrk-tnum" style={{ flex: 1, justifyContent: 'flex-end', display: 'flex' }}>{moneyCompact(r.dz)}</div>
-              <div className="pmrk-td pmrk-tnum" style={{ flex: 1, justifyContent: 'flex-end', display: 'flex', color: 'var(--pmrk-risk-4)' }}>{moneyCompact(r.pdz)}</div>
-              <div className="pmrk-td pmrk-tnum" style={{ flex: 1, justifyContent: 'flex-end', display: 'flex' }}>{moneyCompact(r.adv)}</div>
+              <div className="pmrk-td" style={{ flex: 2.8, fontWeight: i === 0 ? 700 : 400 }}>{r.lvl}</div>
+              <div className="pmrk-td pmrk-tnum" style={{ flex: 0.6, justifyContent: 'flex-end', display: 'flex' }}>{moneyCompact(r.dz)}</div>
+              <div className="pmrk-td pmrk-tnum" style={{ flex: 0.6, justifyContent: 'flex-end', display: 'flex', color: 'var(--pmrk-risk-4)' }}>{moneyCompact(r.pdz)}</div>
+              <div className="pmrk-td pmrk-tnum" style={{ flex: 0.6, justifyContent: 'flex-end', display: 'flex' }}>{moneyCompact(r.adv)}</div>
             </div>
           ))}
         </div>
@@ -800,9 +873,6 @@ function LegalTab({ c }: { c: Counterparty }) {
   const [curacao, setCuracao] = useState(false);
 
   const m = (n: number) => money(n);
-  const curacaoLink = (
-    <a href="#" onClick={(e) => { e.preventDefault(); setCuracao(true); }} style={{ color: 'var(--color-typo-brand)', fontSize: 12 }}>Ссылка на данные КЮРАСАО 2.0 →</a>
-  );
 
   const openClaim = (x: typeof legal.claims[0]) => setDetail({ title: `Претензия ${x.claimNo}`, items: [
     { k: 'Заявитель претензии', v: x.applicant }, { k: 'Направление деятельности', v: x.activity }, { k: 'Номер договора', v: x.contractNo },
@@ -810,62 +880,71 @@ function LegalTab({ c }: { c: Counterparty }) {
     { k: 'Сумма претензии (общая)', v: m(x.total) }, { k: 'Основной долг', v: m(x.principal) }, { k: 'Неустойка', v: m(x.penalty) },
     { k: 'Иное', v: m(x.other) }, { k: 'Удовлетворено', v: m(x.satisfied) }, { k: 'Событие по претензии', v: x.event }, { k: 'Дата события', v: dateRu(x.eventDate) },
     { k: 'Статус', v: <StatusBadge status={x.status} /> }, { k: 'Комментарий', v: x.comment }, { k: 'Связь с судебным делом', v: x.lawsuitLink },
-    { k: 'Юрист, сопровождающий претензию', v: x.lawyer }, { k: 'КЮРАСАО 2.0', v: curacaoLink },
+    { k: 'Юрист, сопровождающий претензию', v: x.lawyer },
   ] });
   const openLawsuit = (x: typeof legal.lawsuits[0]) => setDetail({ title: `Судебное дело ${x.caseNo}`, items: [
     { k: 'Истец', v: x.plaintiff }, { k: 'Номер дела', v: x.caseNo }, { k: 'Дата регистрации дела', v: dateRu(x.regDate) },
     { k: 'Сумма иска текущая', v: m(x.currentClaim) }, { k: 'Удовлетворено', v: m(x.satisfied) }, { k: 'Текущая судебная инстанция', v: x.instance },
     { k: 'Ближайшее судебное заседание', v: dateRu(x.nextHearing) }, { k: 'Статус дела', v: <StatusBadge status={x.status} /> }, { k: 'Результат решения суда', v: x.courtResult },
     { k: 'Исход дела', v: x.outcome }, { k: 'Связь с исполнительным производством', v: x.enforcementLink }, { k: 'Связь с делом о банкротстве', v: x.bankruptcyLink },
-    { k: 'Юрист', v: x.lawyer }, { k: 'КЮРАСАО 2.0', v: curacaoLink },
+    { k: 'Юрист', v: x.lawyer },
   ] });
   const openEnf = (x: typeof legal.enforcement[0]) => setDetail({ title: x.caseName, items: [
     { k: 'Взыскатель', v: x.claimant }, { k: 'Название дела', v: x.caseName }, { k: 'Дата создания дела', v: dateRu(x.createDate) },
     { k: 'Дата выдачи исполнительного листа', v: dateRu(x.writDate) }, { k: 'Исполнительный документ: серия и номер', v: x.writSerial }, { k: 'Сумма по исполнительному документу', v: m(x.sumByDoc) },
     { k: 'Фактически получено', v: m(x.received) }, { k: 'Дата последнего платежа', v: dateRu(x.lastPaymentDate) }, { k: 'Планируемое событие', v: x.plannedEvent },
     { k: 'Дата планируемого события', v: dateRu(x.plannedDate) }, { k: 'Комментарий по событию', v: x.eventComment }, { k: 'Отметка о фактическом выполнении', v: x.completed },
-    { k: 'Дата фактического завершения', v: x.completionDate }, { k: 'КЮРАСАО 2.0', v: curacaoLink },
+    { k: 'Дата фактического завершения', v: x.completionDate },
   ] });
   const openBank = (x: typeof legal.bankruptcy[0]) => setDetail({ title: x.caseName, items: [
     { k: 'Кредитор в деле о банкротстве', v: x.creditor }, { k: 'Название дела о банкротстве', v: x.caseName }, { k: 'Стадия банкротства', v: <StatusBadge status={x.stage} /> },
     { k: 'Сумма требований в реестре', v: m(x.claimInRegistry) }, { k: 'Сумма исполнения требований', v: m(x.execution) }, { k: 'Дата последнего платежа', v: x.lastPaymentDate },
-    { k: 'Сумма последнего платежа', v: m(x.lastPaymentSum) }, { k: 'Планируемое событие', v: x.plannedEvent }, { k: 'Дата планируемого события', v: dateRu(x.plannedDate) }, { k: 'КЮРАСАО 2.0', v: curacaoLink },
+    { k: 'Сумма последнего платежа', v: m(x.lastPaymentSum) }, { k: 'Планируемое событие', v: x.plannedEvent }, { k: 'Дата планируемого события', v: dateRu(x.plannedDate) },
   ] });
 
+  // Ссылка на КЮРАСАО 2.0 перенесена из детальной карточки в отдельный столбец
+  // таблицы («Данные КЮРАСАО 2.0» → «Перейти») — клик по ссылке не должен
+  // открывать саму карточку строки, поэтому останавливаем всплытие.
   const Row = ({ onClick, cols }: { onClick: () => void; cols: React.ReactNode[] }) => (
-    <div className="pmrk-tr" onClick={onClick}>{cols.map((col, i) => <div key={i} className="pmrk-td" style={{ flex: i === 0 ? 1.8 : 1, justifyContent: i > 1 ? 'flex-end' : 'flex-start', display: 'flex' }}>{col}</div>)}<div className="pmrk-td" style={{ flex: 0.3, justifyContent: 'flex-end', display: 'flex' }}>→</div></div>
+    <div className="pmrk-tr" onClick={onClick}>
+      {cols.map((col, i) => <div key={i} className="pmrk-td" style={{ flex: i === 0 ? 1.8 : 1, justifyContent: i > 1 ? 'flex-end' : 'flex-start', display: 'flex' }}>{col}</div>)}
+      <div className="pmrk-td" style={{ flex: 1 }} onClick={(e) => e.stopPropagation()}>
+        <a href="#" onClick={(e) => { e.preventDefault(); setCuracao(true); }} style={{ color: 'var(--color-typo-brand)', fontSize: 12 }}>Перейти</a>
+      </div>
+      <div className="pmrk-td" style={{ flex: 0.3, justifyContent: 'flex-end', display: 'flex' }}>→</div>
+    </div>
   );
 
   return (
-    <SectionCard title="Претензионно-исковая работа" extra={<div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>{curacaoLink}<DateActuality date={c.asOf.legal} source="КЮРАСАО 2.0" /></div>}>
+    <SectionCard title="Претензионно-исковая работа" extra={<DateActuality date={c.asOf.legal} source="КЮРАСАО 2.0" />}>
       <div style={{ marginBottom: 14 }}>
         <Segmented value={sec} onChange={setSec} items={SECTIONS.map((s) => ({ key: s.key, label: s.label, count: s.count }))} />
       </div>
 
       {sec === 'claims' && (legal.claims.length ? (
         <div className="pmrk-table">
-          <div className="pmrk-table__head"><div className="pmrk-th" style={{ flex: 1.8 }}>Заявитель / предмет</div><div className="pmrk-th" style={{ flex: 1 }}>Статус</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Сумма</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Удовлетворено</div><div className="pmrk-th" style={{ flex: 0.3 }} /></div>
+          <div className="pmrk-table__head"><div className="pmrk-th" style={{ flex: 1.8 }}>Заявитель / предмет</div><div className="pmrk-th" style={{ flex: 1 }}>Статус</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Сумма</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Удовлетворено</div><div className="pmrk-th" style={{ flex: 1 }}>Данные КЮРАСАО 2.0</div><div className="pmrk-th" style={{ flex: 0.3 }} /></div>
           {legal.claims.map((x) => <Row key={x.id} onClick={() => openClaim(x)} cols={[<div><b>{x.applicant}</b><div className="pmrk-muted" style={{ fontSize: 11 }}>{x.subject}</div></div>, <StatusBadge status={x.status} />, <span className="pmrk-tnum">{moneyCompact(x.total)}</span>, <span className="pmrk-tnum">{moneyCompact(x.satisfied)}</span>]} />)}
         </div>
       ) : <EmptyState text="Выставленных претензий нет." />)}
 
       {sec === 'lawsuits' && (legal.lawsuits.length ? (
         <div className="pmrk-table">
-          <div className="pmrk-table__head"><div className="pmrk-th" style={{ flex: 1.8 }}>Истец / № дела</div><div className="pmrk-th" style={{ flex: 1 }}>Инстанция</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Сумма иска</div><div className="pmrk-th" style={{ flex: 1 }}>Заседание</div><div className="pmrk-th" style={{ flex: 0.3 }} /></div>
+          <div className="pmrk-table__head"><div className="pmrk-th" style={{ flex: 1.8 }}>Истец / № дела</div><div className="pmrk-th" style={{ flex: 1 }}>Инстанция</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Сумма иска</div><div className="pmrk-th" style={{ flex: 1 }}>Заседание</div><div className="pmrk-th" style={{ flex: 1 }}>Данные КЮРАСАО 2.0</div><div className="pmrk-th" style={{ flex: 0.3 }} /></div>
           {legal.lawsuits.map((x) => <Row key={x.id} onClick={() => openLawsuit(x)} cols={[<div><b>{x.plaintiff}</b><div className="pmrk-muted" style={{ fontSize: 11 }}>{x.caseNo}</div></div>, <span style={{ fontSize: 12 }}>1-я инстанция</span>, <span className="pmrk-tnum">{moneyCompact(x.currentClaim)}</span>, dateRu(x.nextHearing)]} />)}
         </div>
       ) : <EmptyState text="Судебных дел нет." />)}
 
       {sec === 'enforcement' && (legal.enforcement.length ? (
         <div className="pmrk-table">
-          <div className="pmrk-table__head"><div className="pmrk-th" style={{ flex: 1.8 }}>Взыскатель / дело</div><div className="pmrk-th" style={{ flex: 1 }}>Исп. лист</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Сумма</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Получено</div><div className="pmrk-th" style={{ flex: 0.3 }} /></div>
+          <div className="pmrk-table__head"><div className="pmrk-th" style={{ flex: 1.8 }}>Взыскатель / дело</div><div className="pmrk-th" style={{ flex: 1 }}>Исп. лист</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Сумма</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Получено</div><div className="pmrk-th" style={{ flex: 1 }}>Данные КЮРАСАО 2.0</div><div className="pmrk-th" style={{ flex: 0.3 }} /></div>
           {legal.enforcement.map((x) => <Row key={x.id} onClick={() => openEnf(x)} cols={[<div><b>{x.claimant}</b><div className="pmrk-muted" style={{ fontSize: 11 }}>{x.caseName}</div></div>, x.writSerial, <span className="pmrk-tnum">{moneyCompact(x.sumByDoc)}</span>, <span className="pmrk-tnum">{moneyCompact(x.received)}</span>]} />)}
         </div>
       ) : <EmptyState text="Исполнительных производств нет." />)}
 
       {sec === 'bankruptcy' && (legal.bankruptcy.length ? (
         <div className="pmrk-table">
-          <div className="pmrk-table__head"><div className="pmrk-th" style={{ flex: 1.8 }}>Кредитор / дело</div><div className="pmrk-th" style={{ flex: 1 }}>Стадия</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Требования</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Исполнено</div><div className="pmrk-th" style={{ flex: 0.3 }} /></div>
+          <div className="pmrk-table__head"><div className="pmrk-th" style={{ flex: 1.8 }}>Кредитор / дело</div><div className="pmrk-th" style={{ flex: 1 }}>Стадия</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Требования</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>Исполнено</div><div className="pmrk-th" style={{ flex: 1 }}>Данные КЮРАСАО 2.0</div><div className="pmrk-th" style={{ flex: 0.3 }} /></div>
           {legal.bankruptcy.map((x) => <Row key={x.id} onClick={() => openBank(x)} cols={[<div><b>{x.creditor}</b><div className="pmrk-muted" style={{ fontSize: 11 }}>{x.caseName}</div></div>, <StatusBadge status={x.stage} />, <span className="pmrk-tnum">{moneyCompact(x.claimInRegistry)}</span>, <span className="pmrk-tnum">{moneyCompact(x.execution)}</span>]} />)}
         </div>
       ) : <EmptyState text="Банкротных дел нет." />)}
