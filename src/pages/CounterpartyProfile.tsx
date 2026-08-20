@@ -737,11 +737,13 @@ function StatementsTab({ c }: { c: Counterparty }) {
         <span className="pmrk-muted" style={{ fontSize: 12, alignSelf: 'center' }}>Стандарт: РСБУ · валюта ₽ · тыс. руб.</span>
       </div>
       <div className="pmrk-table" style={{ overflow: 'hidden' }}>
-        <div className="pmrk-table__head"><div className="pmrk-th" style={{ flex: 2 }}>Показатель (Форма №1)</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>2023</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>2024</div><div className="pmrk-th" style={{ flex: 1, justifyContent: 'flex-end' }}>2025</div></div>
+        {/* Столбцы по годам — по убыванию (2025→2023), ширина как у ДЗ/ПДЗ/Авансы
+            в «Детализации» (flex 0.6 против 2.8 у «Показателя»). */}
+        <div className="pmrk-table__head"><div className="pmrk-th" style={{ flex: 2.8 }}>Показатель (Форма №1)</div><div className="pmrk-th" style={{ flex: 0.6, justifyContent: 'flex-end' }}>2025</div><div className="pmrk-th" style={{ flex: 0.6, justifyContent: 'flex-end' }}>2024</div><div className="pmrk-th" style={{ flex: 0.6, justifyContent: 'flex-end' }}>2023</div></div>
         {[['Внеоборотные активы', 0.3], ['Оборотные активы', 0.7], ['БАЛАНС (актив)', 1], ['Капитал и резервы', 0.35], ['Долгосрочные обязательства', 0.2], ['Краткосрочные обязательства', 0.45], ['БАЛАНС (пассив)', 1]].map(([label, k]) => (
           <div key={label as string} className="pmrk-tr" style={{ cursor: 'default', fontWeight: (label as string).includes('БАЛАНС') ? 700 : 400 }}>
-            <div className="pmrk-td" style={{ flex: 2 }}>{label}</div>
-            {[0.9, 0.96, 1].map((y, i) => <div key={i} className="pmrk-td pmrk-tnum" style={{ flex: 1, justifyContent: 'flex-end', display: 'flex' }}>{money(Math.round((c.revenue * 0.4 * (k as number)) * y / 1000), { unit: '' })}</div>)}
+            <div className="pmrk-td" style={{ flex: 2.8 }}>{label}</div>
+            {[1, 0.96, 0.9].map((y, i) => <div key={i} className="pmrk-td pmrk-tnum" style={{ flex: 0.6, justifyContent: 'flex-end', display: 'flex' }}>{money(Math.round((c.revenue * 0.4 * (k as number)) * y / 1000), { unit: '' })}</div>)}
           </div>
         ))}
       </div>
